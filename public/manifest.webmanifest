@@ -1,0 +1,9 @@
+{
+  "name": "KukPDF — Smart PDF Scanner & Tools",
+  "short_name": "KukPDF",
+  "description": "Scan documents, convert images to PDF, merge, compress, sign and OCR.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbf7f2",
+  "theme_color": "#e85d3f"
+}
