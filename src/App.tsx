@@ -1,7 +1,22 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera, Combine, FileText, FolderOpen, Home, ImagePlus, KeyRound, Lock, Minimize2, RotateCw, ScanLine, Search, Settings, ShieldCheck, Signature, Sparkles, Star, Trash2, Upload, User, Wrench } from 'lucide-react';
 import type { DocItem, FilterKind, PageItem, ScanMode, Tab } from './types';
 import { downloadBlob, fileToDataUrl, filterCss, filters, formatBytes, modes, pagesToPdf } from './utils';
+
+const pathToTab: Record<string, Tab> = {
+  '/': 'home',
+  '/tools': 'tools',
+  '/scan': 'scan',
+  '/files': 'files',
+  '/profile': 'profile',
+};
+const tabToPath: Record<Tab, string> = {
+  home: '/',
+  tools: '/tools',
+  scan: '/scan',
+  files: '/files',
+  profile: '/profile',
+};
 
 const toolGroups = [
   ['Create', ['Scan to PDF', 'Image to PDF', 'JPG to PDF']],
@@ -45,14 +60,30 @@ function seedDocs(): DocItem[] {
   ];
 }
 
+function initialTab(): Tab {
+  return pathToTab[window.location.pathname] ?? 'home';
+}
+
 export default function App() {
-  const [tab, setTab] = useState<Tab>('home');
+  const [tab, setTabState] = useState<Tab>(initialTab);
   const [docs, setDocs] = useState<DocItem[]>(seedDocs);
   const [pages, setPages] = useState<PageItem[]>([]);
   const [mode, setMode] = useState<ScanMode>('Document');
   const [activeFilter, setActiveFilter] = useState<FilterKind>('Auto');
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onPop = () => setTabState(initialTab());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  function setTab(next: Tab) {
+    setTabState(next);
+    const path = tabToPath[next];
+    if (window.location.pathname !== path) window.history.pushState({}, '', path);
+  }
 
   async function importImages(files: FileList | null) {
     if (!files?.length) return;
@@ -103,12 +134,12 @@ const navItems = [
   { id: 'profile' as Tab, label: 'Profile', icon: User },
 ];
 
-function Brand() { return <div className="brand"><div className="logo"><FileText size={22}/></div><b>Kuk<span>PDF</span></b></div>; }
+function Brand() { return <div className="brand"><div className="logo"><img src="/kuklabs-mark.svg" alt="Kuklabs" /></div><b>Kuk<span>PDF</span></b></div>; }
 function Header({ title, sub }: { title: string; sub?: string }) { return <header><h1>{title}</h1>{sub && <p>{sub}</p>}</header>; }
 
 function HomePage({ setTab, docs, fileRef }: any) {
   const quick = ['Scan to PDF', 'Image to PDF', 'Merge PDF', 'Compress PDF', 'Sign PDF', 'Image to Text'];
-  return <section><Header title="KukPDF" sub="Smart PDF Scanner & Tools" />
+  return <section><Header title="KukPDF" sub="Smart PDF Scanner & Tools · A Kuklabs Product" />
     <div className="search"><Search size={18}/><input placeholder="Search files, tools…" /></div>
     <button className="hero" onClick={() => setTab('scan')}><ScanLine size={34}/><div><b>Scan a document</b><p>Auto crop · Multi-page · PDF export</p></div></button>
     <h2>Quick tools</h2><div className="grid">{quick.map((t) => <ToolCard key={t} label={t} onClick={() => t.includes('Scan') ? setTab('scan') : setTab('tools')} />)}</div>
@@ -143,10 +174,11 @@ function FilesPage({ docs, setDocs }: any) {
 }
 
 function ProfilePage({ docs }: { docs: DocItem[] }) {
-  return <section><Header title="Profile" sub="Plan, scanner settings and security" />
+  return <section><Header title="Profile" sub="Kuklabs Inc. · kuklabs.com" />
+    <div className="card brand-card"><img src="/kuklabs-mark.svg" alt="Kuklabs" /><div><b>KukPDF</b><p>Smart PDF Scanner & Tools</p><small>A Kuklabs Product</small></div></div>
     <div className="card pro"><Sparkles/><b>KukPDF Pro</b><p>Unlimited scans, batch OCR, cloud sync, no watermark.</p><button>Upgrade</button></div>
     <div className="card"><b>Usage</b><p>{docs.length}/20 free monthly scans used</p><progress value={docs.length} max={20}/></div>
-    {['Default scan quality: High', 'Default filter: Auto', 'Auto OCR: Off', 'Cloud sync: Off', 'App lock: Off'].map(x => <div className="setting" key={x}><span>{x}</span><button>Change</button></div>)}
+    {['Company: Kuklabs Inc.', 'Website: kuklabs.com', 'Developer: Kuklabs Inc.', 'Default scan quality: High', 'Default filter: Auto', 'Auto OCR: Off', 'Cloud sync: Off', 'App lock: Off'].map(x => <div className="setting" key={x}><span>{x}</span><button>Change</button></div>)}
   </section>;
 }
 
