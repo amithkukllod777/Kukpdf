@@ -2,6 +2,31 @@
 
 > Status legend: `[x]` implemented, `[~]` partial/prototype, `[ ]` pending, `[!]` requires production validation.
 
+## Session update — client-only V1 pass
+
+This session took the app from a UI-only shell to a genuinely working, fully
+client-side (no backend) PDF app. Real, working now: local persistent storage
+(IndexedDB, replacing the in-memory demo list), an in-app PDF viewer, real
+merge/split/rotate/delete/reorder/duplicate/insert-blank page tools, watermark,
+page numbers, best-effort repair, image-based compress, draw-and-stamp
+signatures, fully **offline** English + Hindi OCR (engine + language data
+vendored in-app, no CDN dependency) with an OCR-backed searchable-PDF export,
+native Android camera/gallery capture via the Capacitor Camera plugin, PIN
+lock + a PIN-gated Secure Folder tab, Share via the OS share sheet, draft
+Privacy Policy/Terms screens, and a real generated app icon (adaptive +
+legacy, all densities) wired into the CI APK build. A `Build Signed Android
+Release` workflow was added but needs a keystore added to GitHub Secrets by
+you before it can run — see `android-ci/README.md`.
+
+**Still explicitly not built** (flagged rather than faked): native
+CameraX/ML Kit auto edge-detection (crop is manual, rectangular — not true
+4-corner perspective correction), password-protect/unlock PDF (pdf-lib has
+no encryption support), PDF annotation/freehand drawing, AI summarize/ask-PDF,
+cloud sync/login/accounts, subscriptions/payments, an admin dashboard, and any
+backend — all of Phases 9 (cloud parts)–13 below are unstarted. Home screen's
+search box and Files' Search/Tags/folders are still UI-only. Full per-item
+status below is updated to match.
+
 ## Product identity
 
 - [x] Product name: KukPDF
@@ -12,10 +37,10 @@
 - [x] Kuklabs K brand mark added
 - [x] Kuklabs blue-purple visual theme
 - [x] “A Kuklabs Product” branding
-- [~] Final KukPDF app icon generated; export approved source as production PNG/SVG and add all Android adaptive-icon sizes
-- [ ] Final splash screen using approved KukPDF icon
-- [ ] About page with version, company, website, support, privacy and terms
-- [ ] Final Play Store assets: icon, feature graphic, screenshots and listing
+- [x] KukPDF app icon generated (K mark on brand navy) and wired into all Android adaptive + legacy mipmap densities via CI
+- [ ] Final splash screen using approved KukPDF icon (Android 12+ system default splash now derives from the new icon + background color; no custom splash screen built)
+- [ ] About page with version, company, website, support, privacy and terms (Privacy/Terms exist from Profile; no dedicated About/version screen)
+- [~] Final Play Store assets: 512×512 icon ready (`resources/playstore-icon-512.png`); feature graphic and screenshots still needed
 
 ## Current technology and build status
 
@@ -30,10 +55,10 @@
 - [x] Vercel SPA rewrite
 - [x] Direct `/scan` route
 - [~] Target URL prepared: `https://pdf.kuklabs.com/scan`; DNS/Vercel domain verification pending
-- [x] jsPDF client-side image-to-PDF
+- [x] pdf-lib client-side PDF creation/editing (replaced jsPDF)
 - [x] Lucide icons
-- [ ] Production signed AAB workflow
-- [ ] Android signing keystore in GitHub Secrets
+- [x] Production signed AAB workflow (`build-android-release.yml`) — needs your keystore in GitHub Secrets before it can run, see `android-ci/README.md`
+- [ ] Android signing keystore in GitHub Secrets (you must generate + add this)
 - [ ] Release versioning and changelog
 - [ ] Crash reporting and analytics
 
@@ -55,10 +80,11 @@
 - [x] Rotate page
 - [x] Delete page
 - [x] Basic visual filters
-- [x] Image-to-PDF export
+- [x] Image-to-PDF export (rotation/crop/filter baked into the output, not just previewed)
 - [x] Download generated PDF
-- [~] Local document list currently in memory/demo state
-- [~] Tool pages are mostly UI placeholders; processing engines pending
+- [x] In-app PDF viewer (renders pages to canvas; no more forced hand-off to an external PDF app)
+- [x] Local document list persists in IndexedDB (survives reload; no longer in-memory demo data)
+- [x] Most tool pages now run real client-side processing (merge/split/rotate/delete/reorder/duplicate/insert-blank/watermark/page-numbers/compress/repair/sign/OCR/searchable-PDF); Annotate, Password Protect, Unlock PDF, Summarize PDF and Ask PDF remain UI-only placeholders with an honest "not built yet" message instead of a fake success
 
 # Phase 1 — Production Native Scanner
 
@@ -66,24 +92,24 @@
 
 - [ ] Native Kotlin scanner module
 - [ ] CameraX live camera preview
-- [ ] Camera permission flow
+- [x] Camera permission flow (handled by the Capacitor Camera plugin's native prompt)
 - [ ] Auto document detection
 - [ ] Real-time edge/boundary detection
 - [ ] Auto capture when document is stable
-- [ ] Manual capture
+- [x] Manual capture (native Android camera intent via `@capacitor/camera`, not a live in-app preview)
 - [ ] Batch/continuous scanning
-- [ ] Multi-page native scanning
-- [ ] Perspective correction
+- [x] Multi-page scanning (add pages one at a time from camera or gallery, not a continuous live-scan mode)
+- [ ] Perspective correction (crop is manual rectangle, not 4-corner quadrilateral warp)
 - [ ] Automatic page straightening
 - [ ] Automatic orientation detection
-- [ ] Auto rotation
+- [x] Manual rotation (90° steps)
 - [ ] Flash: Auto / On / Off
 - [ ] Camera grid
 - [ ] Focus and exposure controls
 - [ ] Blur warning
 - [ ] Low-light warning
 - [ ] Glare warning
-- [ ] Gallery import
+- [x] Gallery import (native multi-picker via Capacitor Camera, with plain file-input fallback)
 - [ ] Import existing PDF for editing
 - [ ] Scan quality presets: Low / Medium / High / Original
 
@@ -120,8 +146,7 @@
 
 ## Scan enhancement
 
-- [~] CSS preview filters: Original, Auto, B&W, Gray, Color, Contrast
-- [ ] Real image processing baked into exported pages
+- [x] CSS preview filters: Original, Auto, B&W, Gray, Color, Contrast — and now actually baked into the exported/edited PDF (canvas filter + rotation + crop), not just a UI preview
 - [ ] Auto Enhance
 - [ ] Clean Scan
 - [ ] Magic Color
@@ -156,23 +181,23 @@
 ## Crop and page editing
 
 - [ ] Smart crop
-- [ ] Manual four-corner crop
+- [~] Crop (draggable rectangle with resize handles; not a true 4-corner perspective warp)
 - [ ] Edge adjustment magnifier
 - [ ] Perspective crop
-- [ ] Rotate left/right
+- [x] Rotate left/right (real, baked into output)
 - [ ] Flip horizontal/vertical
 - [ ] Straighten
 - [ ] Resize
 - [ ] Change page ratio
 - [ ] Change page size
-- [ ] Add page
+- [x] Add page (blank page insert, from the page organizer)
 - [ ] Rescan page
 - [ ] Replace page
-- [ ] Duplicate page
-- [x] Delete page prototype
-- [x] Rotate page prototype
-- [ ] Drag-and-drop page reorder
-- [ ] Multi-select pages
+- [x] Duplicate page
+- [x] Delete page (real — removes the page from the actual PDF)
+- [x] Rotate page (real — persisted PDF page rotation, not just a UI prototype)
+- [~] Reorder pages (move-left/move-right buttons in the page organizer; not drag-and-drop)
+- [x] Multi-select pages (checkbox multi-select for delete, in the page organizer)
 - [ ] Apply filter to all pages
 - [ ] Undo/redo
 - [ ] Preserve original image separately
@@ -181,74 +206,74 @@
 
 ## PDF creation
 
-- [x] Basic multiple-images-to-PDF export
-- [ ] Native Scan to PDF
-- [ ] Camera to PDF
-- [ ] Image to PDF
-- [ ] JPG to PDF
-- [ ] PNG to PDF
-- [ ] Searchable PDF
+- [x] Multiple-images-to-PDF export (real, filters/rotation/crop baked in)
+- [ ] Native Scan to PDF (camera capture → PDF works; no native Kotlin scanner behind it)
+- [x] Camera to PDF
+- [x] Image to PDF
+- [x] JPG to PDF
+- [x] PNG to PDF
+- [x] Searchable PDF (OCR word boxes placed as an invisible, selectable text layer over the scanned image)
 - [ ] Add scans to existing PDF
-- [ ] Merge scanned documents
-- [ ] Page size: Auto / Original / A3 / A4 / A5 / Letter / Legal
-- [ ] Portrait / Landscape
+- [x] Merge scanned documents (via Merge PDF tool)
+- [ ] Page size: Auto / Original / A3 / A4 / A5 / Letter / Legal (fixed to A4 for scan export)
+- [ ] Portrait / Landscape (auto only, not user-selectable)
 - [ ] Page margins
 - [ ] Page alignment
-- [ ] Output quality: Low / Medium / High / Original
+- [ ] Output quality: Low / Medium / High / Original (compress tool has 3 levels; scan export itself is fixed quality)
 - [ ] PDF metadata: title, author, subject, keywords
 
 ## Organize PDF
 
-- [~] Tool catalogue UI exists
-- [ ] Merge PDF
-- [ ] Split PDF
-- [ ] Extract pages
-- [ ] Delete pages
-- [ ] Reorder pages
-- [ ] Rotate pages
-- [ ] Duplicate pages
-- [ ] Insert blank page
+- [x] Tool catalogue UI, now wired to real processing
+- [x] Merge PDF
+- [x] Split PDF (splits into one file per page)
+- [~] Extract pages (underlying function exists; not exposed as its own tool button — use the page organizer + Split)
+- [x] Delete pages
+- [x] Reorder pages (move-left/right, not drag-and-drop)
+- [x] Rotate pages
+- [x] Duplicate pages
+- [x] Insert blank page
 - [ ] Insert scanned page
 - [ ] Insert image
-- [ ] Combine documents
+- [x] Combine documents (Merge PDF)
 - [ ] Remove blank pages automatically
 
 ## Optimize and repair
 
-- [ ] Compress PDF
-- [ ] Compression levels: Low / Recommended / High
-- [ ] Reduce image resolution
-- [ ] Optimize scanned PDF
-- [ ] Convert color pages to grayscale
+- [x] Compress PDF (rasterizes pages to smaller JPEGs — real size reduction, best for scanned/photo PDFs; not suited to text PDFs since it flattens text to an image)
+- [x] Compression levels: Low / Recommended / High
+- [x] Reduce image resolution (part of Compress)
+- [x] Optimize scanned PDF (Compress)
+- [ ] Convert color pages to grayscale (as a standalone toggle — the B&W/Gray scan filters exist but aren't a dedicated PDF-level tool)
 - [ ] Target file-size option
-- [ ] Repair damaged PDF
+- [~] Repair damaged PDF (best-effort: lenient re-parse + re-save via pdf-lib; not a guaranteed recovery tool)
 - [ ] Linearize PDF for fast web view
 
 # Phase 3 — OCR and Searchable Documents
 
-- [ ] Image to Text
-- [ ] Scan to Text
-- [ ] PDF to Text
-- [ ] OCR selected area
-- [ ] Editable extracted text
-- [ ] Copy text
-- [ ] Search text
-- [ ] Share text
+- [x] Image to Text
+- [x] Scan to Text
+- [x] PDF to Text (OCR runs page-by-page over a PDF's rendered pages)
+- [ ] OCR selected area (whole page only)
+- [ ] Editable extracted text (shown read-only + copy, not editable in place)
+- [x] Copy text
+- [ ] Search text (no dedicated search UI over OCR'd text, though Searchable PDF output is searchable in any PDF viewer)
+- [ ] Share text (only whole-PDF share, not extracted text)
 - [ ] Text-to-speech
 - [ ] Translate extracted text
-- [ ] English OCR
-- [ ] Hindi OCR
-- [ ] Multilingual OCR
-- [ ] Automatic language detection
+- [x] English OCR
+- [x] Hindi OCR
+- [x] Multilingual OCR (English + Hindi combined; only these two languages are bundled)
+- [ ] Automatic language detection (user picks the language)
 - [ ] Handwriting recognition
 - [ ] Table recognition
-- [ ] Searchable PDF creation
+- [x] Searchable PDF creation
 - [ ] OCR export to TXT
 - [ ] OCR export to DOCX
 - [ ] OCR export to XLSX
 - [ ] OCR confidence display
-- [ ] Offline OCR mode
-- [ ] Batch OCR
+- [x] Offline OCR mode (engine + English/Hindi language data vendored in-app — works with zero network from first launch)
+- [ ] Batch OCR (one document at a time)
 
 # Phase 4 — ID, KYC and Book Scanner
 
@@ -309,15 +334,15 @@
 
 ## Signature
 
-- [ ] Draw signature
+- [x] Draw signature (canvas pad, stamped onto the PDF via pdf-lib)
 - [ ] Type signature
 - [ ] Upload signature image
 - [ ] Scan physical signature
-- [ ] Save multiple signatures
+- [x] Save multiple signatures (persisted in IndexedDB, reusable across documents)
 - [ ] Add initials
 - [ ] Add date
-- [ ] Resize/move signature
-- [ ] Reuse saved signature
+- [ ] Resize/move signature (fixed placement — bottom-right of the last page)
+- [x] Reuse saved signature
 - [ ] Signature audit trail for advanced e-sign
 
 # Phase 6 — Conversion Tools
@@ -339,59 +364,59 @@
 
 # Phase 7 — File Manager and Offline Storage
 
-- [~] Files UI and sample documents exist
-- [ ] Room/SQLite persistent document database
-- [ ] Local filesystem storage
-- [ ] All Documents
-- [ ] Recent
-- [ ] Scanned
-- [ ] PDFs
-- [ ] Images
-- [ ] Favorites
+- [x] Files UI backed by real, persistent documents (no more sample/demo data)
+- [x] Persistent document database — IndexedDB (via `idb-keyval`), not Room/SQLite, but equivalent in effect: survives reload, fully offline
+- [x] Local storage (documents stored as real Blobs in IndexedDB)
+- [x] All Documents
+- [x] Recent (Home shows the 3 most recent)
+- [x] Scanned
+- [x] PDFs
+- [ ] Images (no separate image-only view)
+- [x] Favorites
 - [ ] Shared
 - [ ] Downloads
-- [ ] Secure Folder
-- [ ] Trash
+- [x] Secure Folder (PIN-gated tab; a lock button on each file moves it in/out of the Secure Folder)
+- [ ] Trash (delete is immediate/permanent, no trash-and-restore)
 - [ ] Create folders
 - [ ] Rename
 - [ ] Move
 - [ ] Copy
-- [ ] Duplicate
-- [ ] Delete
+- [x] Duplicate (pages; not whole documents)
+- [x] Delete
 - [ ] Restore
-- [ ] Search by filename
+- [ ] Search by filename (Home's search box is still a non-functional placeholder input)
 - [ ] Full-text OCR search
 - [ ] Tags
-- [ ] Sort by name/date/size/type
-- [ ] Grid/list view
-- [ ] Document preview
+- [ ] Sort by name/date/size/type (fixed newest-first)
+- [ ] Grid/list view (list only)
+- [x] Document preview (in-app PDF viewer)
 - [ ] Document details
 - [ ] Storage usage dashboard
-- [ ] Offline-first operation
+- [x] Offline-first operation (genuinely true now — storage, PDF tools and OCR all run without a network connection)
 
 # Phase 8 — Security and Privacy
 
-- [ ] Password-protect PDF
-- [ ] Remove PDF password where authorized
+- [ ] Password-protect PDF (pdf-lib does not support PDF encryption — needs a native/server crypto library; honest "not built yet" message shown in-app)
+- [ ] Remove PDF password where authorized (same limitation)
 - [ ] PDF encryption
-- [ ] Lock document
-- [ ] App PIN
+- [x] Lock document (PIN-gated Secure Folder, per document)
+- [x] App PIN (SHA-256-hashed, checked via `@capacitor/preferences`; re-locks on app background/resume)
 - [ ] Fingerprint unlock
 - [ ] Face/biometric unlock
-- [ ] Secure/private folder
-- [ ] Hide documents
+- [x] Secure/private folder
+- [x] Hide documents (moved out of the main Files list into the Secure Folder)
 - [ ] Block screenshots in secure mode
-- [ ] Local/private processing mode
-- [ ] HTTPS only
+- [x] Local/private processing mode (everything — storage, PDF tools, OCR — now runs entirely on-device; there is no backend to send data to)
+- [ ] HTTPS only (n/a — no network calls in this build)
 - [ ] Signed cloud URLs
-- [ ] Encrypt sensitive local data
+- [ ] Encrypt sensitive local data (PIN gates access in-app but IndexedDB itself is unencrypted at rest)
 - [ ] Delete temporary files after processing
 - [ ] Privacy controls and consent
 - [ ] “Do not train AI on user documents” policy
-- [ ] Privacy Policy
-- [ ] Terms of Service
-- [ ] Data deletion workflow
-- [ ] Account deletion workflow
+- [x] Privacy Policy (draft, in-app; needs Kuklabs legal review + a hosted public URL before Play Store submission)
+- [x] Terms of Service (same caveat)
+- [x] Data deletion workflow (delete a document removes it from IndexedDB immediately)
+- [ ] Account deletion workflow (n/a — no accounts exist)
 
 # Phase 9 — Cloud, Account and Sharing
 
@@ -405,16 +430,16 @@
 - [ ] Manual backup
 - [ ] Multi-device sync
 - [ ] Restore documents
-- [ ] Offline access
+- [x] Offline access (the whole app works offline — no cloud/sync backing it yet)
 - [ ] Wi-Fi-only backup
 - [ ] Conflict resolution
-- [ ] Share PDF
+- [x] Share PDF (native OS share sheet via `@capacitor/share`, Web Share API fallback in the browser)
 - [ ] Share JPG/PNG
 - [ ] Share Word/TXT
-- [ ] WhatsApp share
-- [ ] Email share
+- [x] WhatsApp share (via the generic OS share sheet, not a dedicated WhatsApp button)
+- [x] Email share (same — generic share sheet)
 - [ ] Print
-- [ ] Save to device
+- [x] Save to device (download)
 - [ ] Save to cloud
 - [ ] Generate secure share link
 - [ ] QR sharing
@@ -560,16 +585,16 @@
 # Phase 14 — Deployment and Release
 
 - [x] GitHub repository
-- [x] GitHub Actions debug APK
+- [x] GitHub Actions debug APK (now with the real KukPDF icon applied)
 - [ ] Vercel deployment connected to repository
 - [ ] `pdf.kuklabs.com` DNS connected and verified
 - [ ] Production backend environment
 - [ ] Dev/staging/production environments
-- [ ] Signed Android AAB
-- [ ] Play Console app setup
+- [~] Signed Android AAB — workflow exists (`build-android-release.yml`); needs your keystore in GitHub Secrets to actually produce a signed build, see `android-ci/README.md`
+- [ ] Play Console app setup (requires your Google Play Developer account)
 - [ ] Data Safety form
-- [ ] Privacy Policy URL
-- [ ] Terms URL
+- [ ] Privacy Policy URL (draft text exists in-app; needs hosting at a public URL, e.g. on kuklabs.com)
+- [ ] Terms URL (same)
 - [ ] Support email
 - [ ] Closed testing release
 - [ ] Internal testing group

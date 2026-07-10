@@ -1,12 +1,10 @@
-name: Build Android APK
+name: Build Signed Android Release
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 jobs:
-  build-apk:
+  build-release:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,14 +44,31 @@ jobs:
           done
           cp android-icons/ic_launcher_background.xml android/app/src/main/res/values/ic_launcher_background.xml
 
-      - name: Build debug APK
+      - name: Configure release signing
+        env:
+          KUKPDF_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KUKPDF_KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is not set. See android-ci/README.md for the one-time setup steps before running this workflow."
+            exit 1
+          fi
+          echo "$KUKPDF_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          cp android-ci/signing.gradle android/app/signing.gradle
+          echo "apply from: 'signing.gradle'" >> android/app/build.gradle
+
+      - name: Build signed release AAB
+        env:
+          KUKPDF_KEYSTORE_PATH: release.keystore
+          KUKPDF_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KUKPDF_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KUKPDF_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew assembleDebug
+          ./gradlew bundleRelease
 
-      - name: Upload APK artifact
+      - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KukPDF-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: KukPDF-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab

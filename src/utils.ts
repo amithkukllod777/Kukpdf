@@ -1,5 +1,4 @@
-import { jsPDF } from 'jspdf';
-import type { FilterKind, PageItem } from './types';
+import type { FilterKind } from './types';
 
 export const filters: FilterKind[] = ['Original', 'Auto', 'B&W', 'Gray', 'Color', 'Contrast'];
 export const modes = ['Document', 'ID Card', 'Book', 'Receipt', 'QR'] as const;
@@ -26,30 +25,6 @@ export function fileToDataUrl(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-export async function pagesToPdf(pages: PageItem[]): Promise<Blob> {
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  for (let i = 0; i < pages.length; i++) {
-    if (i > 0) doc.addPage();
-    const img = await loadImage(pages[i].dataUrl);
-    const ratio = Math.min(pageW / img.width, pageH / img.height);
-    const w = img.width * ratio;
-    const h = img.height * ratio;
-    doc.addImage(pages[i].dataUrl, 'JPEG', (pageW - w) / 2, (pageH - h) / 2, w, h, undefined, 'FAST');
-  }
-  return doc.output('blob');
 }
 
 export function downloadBlob(blob: Blob, name: string) {
