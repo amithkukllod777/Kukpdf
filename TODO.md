@@ -18,14 +18,24 @@ legacy, all densities) wired into the CI APK build. A `Build Signed Android
 Release` workflow was added but needs a keystore added to GitHub Secrets by
 you before it can run — see `android-ci/README.md`.
 
-**Still explicitly not built** (flagged rather than faked): native
-CameraX/ML Kit auto edge-detection (crop is manual, rectangular — not true
-4-corner perspective correction), password-protect/unlock PDF (pdf-lib has
-no encryption support), PDF annotation/freehand drawing, AI summarize/ask-PDF,
-cloud sync/login/accounts, subscriptions/payments, an admin dashboard, and any
-backend — all of Phases 9 (cloud parts)–13 below are unstarted. Home screen's
-search box and Files' Search/Tags/folders are still UI-only. Full per-item
-status below is updated to match.
+A later pass in the same session also fixed two real bugs found on a physical
+device (Share silently failing because generated filenames contained "/"
+from a locale date, and the Files list overflowing off-screen on narrow
+phones), replaced the placeholder icon with the real KukPDF logo, and added
+native auto-scan via Google's ML Kit Document Scanner (`@capacitor-mlkit/document-scanner`)
+— real live-camera edge detection/auto-crop/perspective correction, the same
+engine Google Drive uses, with an automatic fallback to plain camera capture
+when it's unavailable. That scanner integration is wired end-to-end and
+CI-built but **not yet verified on a physical device** — the native scanner
+UI itself can only be exercised on-device.
+
+**Still explicitly not built** (flagged rather than faked): password-protect/
+unlock PDF (pdf-lib has no encryption support), PDF annotation/freehand
+drawing, AI summarize/ask-PDF, cloud sync/login/accounts, subscriptions/
+payments, an admin dashboard, and any backend — all of Phases 9 (cloud
+parts)–13 below are unstarted. Home screen's search box and Files'
+Search/Tags/folders are still UI-only. Full per-item status below is
+updated to match.
 
 ## Product identity
 
@@ -90,42 +100,42 @@ status below is updated to match.
 
 ## Camera scanner
 
-- [ ] Native Kotlin scanner module
-- [ ] CameraX live camera preview
-- [x] Camera permission flow (handled by the Capacitor Camera plugin's native prompt)
-- [ ] Auto document detection
-- [ ] Real-time edge/boundary detection
-- [ ] Auto capture when document is stable
-- [x] Manual capture (native Android camera intent via `@capacitor/camera`, not a live in-app preview)
-- [ ] Batch/continuous scanning
-- [x] Multi-page scanning (add pages one at a time from camera or gallery, not a continuous live-scan mode)
-- [ ] Perspective correction (crop is manual rectangle, not 4-corner quadrilateral warp)
-- [ ] Automatic page straightening
-- [ ] Automatic orientation detection
-- [x] Manual rotation (90° steps)
-- [ ] Flash: Auto / On / Off
+- [x] Native document scanner — Google ML Kit Document Scanner (`@capacitor-mlkit/document-scanner`), the same scanner Google Drive uses: live camera preview, auto edge-detection, auto-crop, perspective correction and filters, all native, no custom Kotlin/CameraX module written by hand. Android only; auto-falls back to plain camera capture on web/iOS or if the on-device Google Play services module isn't installed yet (with an in-app "Enable auto-scan" one-time download prompt). **Not yet verified on a physical device** — built and wired end-to-end, CI-built, but the native scanner UI itself can only be exercised on-device, not in this dev sandbox.
+- [x] CameraX live camera preview (via the ML Kit scanner's built-in native UI, not a hand-built preview)
+- [x] Camera permission flow (handled natively by the scanner / Capacitor Camera plugin)
+- [x] Auto document detection
+- [x] Real-time edge/boundary detection
+- [x] Auto capture when document is stable (part of ML Kit's FULL scanner mode)
+- [x] Manual capture (native Android camera intent via `@capacitor/camera`, used as the fallback path)
+- [ ] Batch/continuous scanning beyond the scanner's own multi-page flow
+- [x] Multi-page scanning (native multi-page capture within one scan session, up to 20 pages)
+- [x] Perspective correction (native, via ML Kit)
+- [x] Automatic page straightening (native, via ML Kit)
+- [ ] Automatic orientation detection (outside the ML Kit flow)
+- [x] Manual rotation (90° steps, still available for touch-ups after scanning)
+- [ ] Flash: Auto / On / Off (controlled by the native scanner UI itself, not exposed as an app setting)
 - [ ] Camera grid
 - [ ] Focus and exposure controls
 - [ ] Blur warning
 - [ ] Low-light warning
 - [ ] Glare warning
-- [x] Gallery import (native multi-picker via Capacitor Camera, with plain file-input fallback)
+- [x] Gallery import (native multi-picker via Capacitor Camera, with plain file-input fallback; ML Kit scanner also supports gallery import when `galleryImportAllowed` is on)
 - [ ] Import existing PDF for editing
 - [ ] Scan quality presets: Low / Medium / High / Original
 
 ## Recommended native stack
 
-- [ ] Kotlin
-- [ ] Jetpack CameraX
-- [ ] Google ML Kit Document Scanner
+- [ ] Kotlin (not needed for the scanner — solved via a plugin instead, see below)
+- [ ] Jetpack CameraX (superseded by ML Kit's own scanner UI)
+- [x] Google ML Kit Document Scanner (via `@capacitor-mlkit/document-scanner`, not hand-written Kotlin)
 - [ ] OpenCV for custom image processing
-- [ ] ML Kit Text Recognition
-- [ ] Tesseract optional offline OCR
-- [ ] Room database
+- [x] ML Kit Text Recognition (via tesseract.js instead — see OCR section; different engine, same category of capability)
+- [x] Tesseract optional offline OCR (this is what's actually used — fully offline, not "optional")
+- [ ] Room database (IndexedDB used instead — see File Manager section)
 - [ ] WorkManager background jobs
 - [ ] Jetpack Security / encrypted storage
-- [ ] Capacitor native bridge during transition, or migrate scanner screens fully to native Compose
-- [ ] Decide final UI strategy: Capacitor hybrid vs Kotlin Jetpack Compose
+- [x] Capacitor native bridge (this is the chosen approach — a Capacitor plugin for the scanner rather than migrating to native Compose)
+- [x] Decided: Capacitor hybrid, using native plugins (Camera, ML Kit Document Scanner, Share, Filesystem, Preferences) for the pieces that genuinely need native code
 
 ## Scan modes
 

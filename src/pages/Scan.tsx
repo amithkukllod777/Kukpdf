@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { Camera, Crop, FileText, ImagePlus, RotateCw, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Camera, Crop, FileText, ImagePlus, RotateCw, ScanLine, Trash2 } from 'lucide-react';
 import type { FilterKind, PageItem, ScanMode } from '../types';
 import Header from '../components/Header';
 import CropEditor from '../components/CropEditor';
 import { filterCss, filters, modes } from '../utils';
 import { captureFromCamera } from '../capacitor/camera';
+import { installNativeScannerModule, isNativeScannerAvailable, scanWithNativeScanner } from '../capacitor/documentScanner';
+import { Capacitor } from '@capacitor/core';
 
 export default function ScanPage({
   pages, mode, setMode, activeFilter, setActiveFilter, fileRef, importImages,
@@ -26,10 +28,38 @@ export default function ScanPage({
 }) {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [cropping, setCropping] = useState<string | null>(null);
+  const [scannerReady, setScannerReady] = useState<boolean | null>(null); // null = still checking
+  const [installing, setInstalling] = useState<number | null>(null); // install progress %, null = not installing
+  const [scanning, setScanning] = useState(false);
   const selected = pages.find((p) => p.id === selectedPage);
   const croppingPage = pages.find((p) => p.id === cropping);
+  const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+
+  useEffect(() => {
+    isNativeScannerAvailable().then(setScannerReady);
+  }, []);
+
+  async function enableAutoScan() {
+    setInstalling(0);
+    try {
+      await installNativeScannerModule(setInstalling);
+      setScannerReady(await isNativeScannerAvailable());
+    } finally {
+      setInstalling(null);
+    }
+  }
 
   async function shutter() {
+    if (scannerReady) {
+      setScanning(true);
+      try {
+        const images = await scanWithNativeScanner();
+        if (images?.length) addPages(images);
+      } finally {
+        setScanning(false);
+      }
+      return;
+    }
     const dataUrl = await captureFromCamera();
     if (dataUrl) addPages([dataUrl]);
   }
@@ -39,9 +69,23 @@ export default function ScanPage({
       <Header title="Scan" sub="Document · ID Card · Book · Receipt · QR" />
       <div className="camera">
         <div className="frame">
-          <Camera size={56} />
-          <p>Tap the shutter to use your camera</p>
-          <small>Native camera capture via Capacitor. Auto edge-detection is not built yet — crop manually after capture.</small>
+          {scannerReady ? <ScanLine size={56} /> : <Camera size={56} />}
+          <p>
+            {scanning ? 'Opening scanner…'
+              : installing !== null ? `Enabling auto-scan… ${installing}%`
+              : scannerReady ? 'Tap the shutter for auto edge-detect & crop'
+              : 'Tap the shutter to use your camera'}
+          </p>
+          <small>
+            {scannerReady
+              ? 'Google ML Kit Document Scanner — live edge detection, auto-crop, filters and multi-page, fully native.'
+              : isAndroid && scannerReady === false
+                ? 'Auto-scan needs a small one-time Google Play services download.'
+                : 'Native camera capture via Capacitor. Crop manually after capture.'}
+          </small>
+          {isAndroid && scannerReady === false && installing === null && (
+            <button className="chip active" onClick={enableAutoScan} style={{ marginTop: 10 }}>Enable auto-scan</button>
+          )}
         </div>
       </div>
       <div className="chips">
@@ -51,7 +95,9 @@ export default function ScanPage({
       </div>
       <div className="capture">
         <button onClick={() => fileRef.current?.click()}><ImagePlus />Import</button>
-        <button className="shutter" onClick={shutter}><Camera /></button>
+        <button className="shutter" onClick={shutter} disabled={scanning || installing !== null}>
+          {scannerReady ? <ScanLine /> : <Camera />}
+        </button>
         <button onClick={exportPdf} disabled={!pages.length || exporting}><FileText />{exporting ? '…' : 'PDF'}</button>
       </div>
       <div className="chips">
