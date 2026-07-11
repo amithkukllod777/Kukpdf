@@ -18,6 +18,19 @@ export function formatBytes(n: number): string {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
+/** Strips characters that break a filesystem path (native Filesystem.writeFile treats "/" as a directory separator). */
+export function sanitizeFilename(name: string): string {
+  return name.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+}
+
+/** Locale-proof, filesystem-safe date stamp (avoids "/" from toLocaleDateString on many locales). */
+export function dateStamp(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -31,7 +44,7 @@ export function downloadBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = name;
+  a.download = sanitizeFilename(name);
   document.body.appendChild(a);
   a.click();
   a.remove();

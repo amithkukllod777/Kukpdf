@@ -25,7 +25,7 @@ export default function ProfilePage({ docs, signatures, onDeleteSignature, onUnl
     <section>
       <Header title="Profile" sub="Kuklabs Inc. · kuklabs.com" />
       <div className="card brand-card">
-        <img src="/kuklabs-mark.svg" alt="Kuklabs" />
+        <img src="/kukpdf-mark.png" alt="KukPDF" />
         <div><b>KukPDF</b><p>Smart PDF Scanner & Tools</p><small>A Kuklabs Product</small></div>
       </div>
       <div className="card pro">

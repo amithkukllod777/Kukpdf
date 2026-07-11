@@ -12,7 +12,7 @@ import ScanPage from './pages/Scan';
 import FilesPage from './pages/Files';
 import ProfilePage from './pages/Profile';
 import LockScreen from './pages/LockScreen';
-import { fileToDataUrl } from './utils';
+import { dateStamp, fileToDataUrl } from './utils';
 import { pagesToPdf } from './pdf/export';
 import { listDocs, saveDoc, deleteDoc, listSignatures, saveSignature, deleteSignature } from './db';
 import { pickFromGallery } from './capacitor/camera';
@@ -96,7 +96,7 @@ export default function App() {
     if (!pages.length) return;
     setExporting(true);
     try {
-      const name = `${mode} ${new Date().toLocaleDateString()}.pdf`;
+      const name = `${mode} ${dateStamp()}.pdf`;
       const blob = await pagesToPdf(pages);
       const doc: DocItem = { id: crypto.randomUUID(), name, kind: 'scan', pages, createdAt: Date.now(), size: blob.size, blob };
       await saveDoc(doc);
