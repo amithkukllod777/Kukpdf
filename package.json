@@ -12,19 +12,29 @@
     "android:open": "npx cap open android"
   },
   "dependencies": {
-    "@capacitor/android": "latest",
-    "@capacitor/app": "latest",
-    "@capacitor/camera": "latest",
-    "@capacitor/core": "latest",
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "lucide-react": "latest",
-    "jspdf": "latest"
+    "@capacitor-mlkit/document-scanner": "8.1.0",
+    "@capacitor/android": "8.4.1",
+    "@capacitor/app": "8.1.0",
+    "@capacitor/camera": "8.2.1",
+    "@capacitor/core": "8.4.1",
+    "@capacitor/filesystem": "8.1.2",
+    "@capacitor/preferences": "8.0.1",
+    "@capacitor/share": "8.0.1",
+    "@vitejs/plugin-react": "6.0.3",
+    "idb-keyval": "6.3.0",
+    "lucide-react": "1.24.0",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "4.10.38",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "tesseract.js": "7.0.0",
+    "typescript": "5.6.3",
+    "vite": "8.1.4"
   },
   "devDependencies": {
-    "@capacitor/cli": "latest"
+    "@capacitor/cli": "8.4.1",
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3"
   }
 }

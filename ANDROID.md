@@ -37,7 +37,7 @@ Next native upgrade should add:
 Android package id:
 
 ```text
-com.kuklabs.kukpdf
+com.kuklabs.pdf
 ```
 
 ## Release APK/AAB

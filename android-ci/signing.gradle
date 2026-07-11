@@ -1,0 +1,13 @@
+// Applied onto the freshly-generated android/app/build.gradle by
+// .github/workflows/build-android-release.yml. Reads the keystore and
+// credentials from environment variables set from GitHub Secrets so nothing
+// sensitive is ever written into the repo or into build.gradle itself.
+android.signingConfigs {
+    release {
+        storeFile file(System.getenv('KUKPDF_KEYSTORE_PATH') ?: 'release.keystore')
+        storePassword System.getenv('KUKPDF_KEYSTORE_PASSWORD')
+        keyAlias System.getenv('KUKPDF_KEY_ALIAS')
+        keyPassword System.getenv('KUKPDF_KEY_PASSWORD')
+    }
+}
+android.buildTypes.release.signingConfig = android.signingConfigs.release

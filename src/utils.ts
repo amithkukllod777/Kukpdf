@@ -1,5 +1,4 @@
-import { jsPDF } from 'jspdf';
-import type { FilterKind, PageItem } from './types';
+import type { FilterKind } from './types';
 
 export const filters: FilterKind[] = ['Original', 'Auto', 'B&W', 'Gray', 'Color', 'Contrast'];
 export const modes = ['Document', 'ID Card', 'Book', 'Receipt', 'QR'] as const;
@@ -19,6 +18,19 @@ export function formatBytes(n: number): string {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
+/** Strips characters that break a filesystem path (native Filesystem.writeFile treats "/" as a directory separator). */
+export function sanitizeFilename(name: string): string {
+  return name.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+}
+
+/** Locale-proof, filesystem-safe date stamp (avoids "/" from toLocaleDateString on many locales). */
+export function dateStamp(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -28,35 +40,11 @@ export function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-export async function pagesToPdf(pages: PageItem[]): Promise<Blob> {
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  for (let i = 0; i < pages.length; i++) {
-    if (i > 0) doc.addPage();
-    const img = await loadImage(pages[i].dataUrl);
-    const ratio = Math.min(pageW / img.width, pageH / img.height);
-    const w = img.width * ratio;
-    const h = img.height * ratio;
-    doc.addImage(pages[i].dataUrl, 'JPEG', (pageW - w) / 2, (pageH - h) / 2, w, h, undefined, 'FAST');
-  }
-  return doc.output('blob');
-}
-
 export function downloadBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = name;
+  a.download = sanitizeFilename(name);
   document.body.appendChild(a);
   a.click();
   a.remove();
