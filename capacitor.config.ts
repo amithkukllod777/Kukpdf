@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.kuklabs.kukpdf',
+  appId: 'com.kuklabs.pdf',
   appName: 'KukPDF',
   webDir: 'dist',
   bundledWebRuntime: false,

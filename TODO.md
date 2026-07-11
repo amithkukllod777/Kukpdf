@@ -43,7 +43,7 @@ updated to match.
 - [x] Tagline: Smart PDF Scanner & Tools
 - [x] Company: Kuklabs Inc.
 - [x] Website identity: kuklabs.com
-- [x] Android package ID: `com.kuklabs.kukpdf`
+- [x] Android package ID: `com.kuklabs.pdf`
 - [x] Kuklabs K brand mark added
 - [x] Kuklabs blue-purple visual theme
 - [x] “A Kuklabs Product” branding
