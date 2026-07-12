@@ -12,11 +12,13 @@ import ScanPage from './pages/Scan';
 import FilesPage from './pages/Files';
 import ProfilePage from './pages/Profile';
 import LockScreen from './pages/LockScreen';
+import Login from './pages/Login';
 import { dateStamp, fileToDataUrl } from './utils';
 import { pagesToPdf } from './pdf/export';
 import { listDocs, saveDoc, deleteDoc, listSignatures, saveSignature, deleteSignature } from './db';
 import { pickFromGallery } from './capacitor/camera';
 import { hasPin } from './capacitor/lock';
+import { getCurrentUser, signOut, type KuklabsUser } from './kuklabs/authClient';
 
 const pathToTab: Record<string, Tab> = { '/': 'home', '/tools': 'tools', '/scan': 'scan', '/files': 'files', '/profile': 'profile' };
 const tabToPath: Record<Tab, string> = { home: '/', tools: '/tools', scan: '/scan', files: '/files', profile: '/profile' };
@@ -47,6 +49,8 @@ export default function App() {
   const [legalDoc, setLegalDoc] = useState<'privacy' | 'terms' | null>(null);
   const [unlockedSecure, setUnlockedSecure] = useState(false);
   const [locked, setLocked] = useState<boolean | null>(null); // null = still checking
+  const [user, setUser] = useState<KuklabsUser | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -59,7 +63,13 @@ export default function App() {
     listDocs().then(setDocs);
     listSignatures().then(setSignatures);
     hasPin().then((on) => setLocked(on));
+    getCurrentUser().then(setUser);
   }, []);
+
+  async function handleSignOut() {
+    await signOut();
+    setUser(null);
+  }
 
   useEffect(() => {
     const sub = CapApp.addListener('appStateChange', ({ isActive }) => {
@@ -220,6 +230,9 @@ export default function App() {
           <ProfilePage
             docs={docs}
             signatures={signatures}
+            user={user}
+            onSignIn={() => setShowLogin(true)}
+            onSignOut={handleSignOut}
             onDeleteSignature={handleDeleteSignature}
             onUnlockSecure={() => setUnlockedSecure(true)}
             setTab={setTab}
@@ -261,6 +274,12 @@ export default function App() {
         </div>
       )}
       {legalDoc && <LegalModal doc={legalDoc} onClose={() => setLegalDoc(null)} />}
+      {showLogin && (
+        <Login
+          onClose={() => setShowLogin(false)}
+          onDone={async () => { setUser(await getCurrentUser()); setShowLogin(false); }}
+        />
+      )}
     </div>
   );
 }

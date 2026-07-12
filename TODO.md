@@ -29,6 +29,30 @@ when it's unavailable. That scanner integration is wired end-to-end and
 CI-built but **not yet verified on a physical device** — the native scanner
 UI itself can only be exercised on-device.
 
+A later pass brought KukPDF onto the **Kuklabs Universal Standard**
+(`KUKLABS_IDENTITY.md` v1.0.0): adopted the shared design tokens (neutral
+`#F8FAFC` foundation, single product accent `#2563EB` = accent-600 WCAG-AA,
+semantic colours reserved for status, Inter type scale, dark-mode tokens) —
+replacing the earlier warm-cream + multi-colour "playful" theme, which violated
+the standard. Built the compliant **Kuklabs login screen** (`src/pages/Login.tsx`,
+mirrors the KukKeep reference: Welcome to / Kuk**PDF**, Login/Sign Up tabs,
+identity + password, Forgot Password, Continue with Google, Terms/Privacy,
+Powered by Kuklabs) wired to the shared **AuthKit `auth.*` tRPC contract**
+(`src/kuklabs/authClient.ts`) — email/password + email-OTP is a real working
+path using the bearer token the backend returns for native apps, stored via
+`@capacitor/preferences`. **No KukPDF-specific users table, password logic,
+session system or Google client** — exactly per the mandate. Restructured
+Profile to §16 (identity card, Security, About with `Version X.Y.Z (Build N)`,
+Sign out, Powered by Kuklabs). Central brand config in `src/brand.ts` (§4).
+
+**Still blocked on owner infra (not code):** "Continue with Google" needs the
+Android OAuth client + SHA fingerprints registered in the shared Google Cloud
+project; a `pdf.kuklabs.com` subdomain enables shared-cookie SSO on web. The
+`AUTH_BASE` constant points at the shared backend (`www.kuklabs.com`) and swaps
+to `auth.kuklabs.com` once that host is live. Cloud document sync (tying files
+to the Kuklabs userId) is a future backend task — today documents remain
+on-device in IndexedDB.
+
 A later pass added real PDF password protection (`pdf-lib-plus-encrypt`, AES-128,
 verified end-to-end: encrypting then re-opening with pdfjs-dist confirms the
 file is unreadable without the password and correctly opens with it), wired

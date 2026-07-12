@@ -81,13 +81,14 @@ export default function ScanPage({
       {pages.length === 0 ? (
         <>
           <div className="scan-hero">
-            <b>Ready when you are ✨</b>
+            <span className="scan-glyph">{scannerReady ? <ScanLine /> : <Camera />}</span>
+            <b>Ready to Scan</b>
             <span>
               {scannerReady
-                ? "Google's live scanner — edge detect, auto-crop, multi-page"
+                ? "Opens the camera with live edge detection, auto-crop and multi-page capture."
                 : isAndroid && scannerReady === false
-                  ? 'Auto-scan needs a small one-time download — or use the plain camera now'
-                  : 'Opens your camera — crop manually after capture'}
+                  ? 'Auto-scan needs a small one-time download — or use the plain camera now.'
+                  : 'Opens your camera. Crop manually after capture.'}
             </span>
             <button className="scan-cta" onClick={shutter} disabled={busy}>
               {scanning ? 'Opening scanner…'
