@@ -1,6 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import type { PageItem } from '../types';
-import { bakeAllPages } from './bake';
+import { bakeAllPages, capImageDataUrl } from './bake';
+import { fileToDataUrl } from '../utils';
 
 const A4_PT = { w: 595.28, h: 841.89 };
 
@@ -18,6 +19,24 @@ export async function pagesToPdf(pages: PageItem[]): Promise<Blob> {
   const doc = await PDFDocument.create();
   for (const dataUrl of baked) {
     const bytes = dataUrlToBytes(dataUrl);
+    const jpg = await doc.embedJpg(bytes);
+    const ratio = Math.min(A4_PT.w / jpg.width, A4_PT.h / jpg.height);
+    const w = jpg.width * ratio;
+    const h = jpg.height * ratio;
+    const page = doc.addPage([A4_PT.w, A4_PT.h]);
+    page.drawImage(jpg, { x: (A4_PT.w - w) / 2, y: (A4_PT.h - h) / 2, width: w, height: h });
+  }
+  const bytes = await doc.save();
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+/** Builds a multi-page PDF directly from picked image files (Image to PDF / JPG to PDF tools). */
+export async function imagesToPdf(files: File[]): Promise<Blob> {
+  const doc = await PDFDocument.create();
+  for (const file of files) {
+    const rawDataUrl = await fileToDataUrl(file);
+    const capped = await capImageDataUrl(rawDataUrl);
+    const bytes = dataUrlToBytes(capped);
     const jpg = await doc.embedJpg(bytes);
     const ratio = Math.min(A4_PT.w / jpg.width, A4_PT.h / jpg.height);
     const w = jpg.width * ratio;

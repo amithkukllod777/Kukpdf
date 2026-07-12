@@ -5,6 +5,7 @@ export async function captureFromCamera(): Promise<string | null> {
   try {
     const photo = await Camera.getPhoto({
       quality: 88,
+      width: 2200,
       resultType: CameraResultType.DataUrl,
       source: CameraSource.Camera,
       saveToGallery: false,
@@ -23,7 +24,7 @@ export async function pickFromGallery(multiple = true): Promise<string[]> {
       const result = await (Camera as any).pickImages({ quality: 88, limit: 20 });
       return (result.photos ?? []).map((p: any) => p.webPath ?? p.dataUrl).filter(Boolean);
     }
-    const photo = await Camera.getPhoto({ quality: 88, resultType: CameraResultType.DataUrl, source: CameraSource.Photos });
+    const photo = await Camera.getPhoto({ quality: 88, width: 2200, resultType: CameraResultType.DataUrl, source: CameraSource.Photos });
     return photo.dataUrl ? [photo.dataUrl] : [];
   } catch {
     return [];

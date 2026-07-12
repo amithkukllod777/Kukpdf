@@ -10,7 +10,7 @@ import { Capacitor } from '@capacitor/core';
 
 export default function ScanPage({
   pages, mode, setMode, activeFilter, setActiveFilter, fileRef, importImages,
-  addPages, exportPdf, rotatePage, deletePage, setCrop, exporting,
+  addPages, exportPdf, rotatePage, deletePage, setCrop, exporting, exportError,
 }: {
   pages: PageItem[];
   mode: ScanMode;
@@ -25,6 +25,7 @@ export default function ScanPage({
   deletePage: (id: string) => void;
   setCrop: (id: string, crop: PageItem['crop']) => void;
   exporting: boolean;
+  exportError: string | null;
 }) {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [cropping, setCropping] = useState<string | null>(null);
@@ -68,30 +69,26 @@ export default function ScanPage({
     <section>
       <Header title="Scan" sub="Document · ID Card · Book · Receipt · QR" />
       <div className="camera">
-        <button
-          className="frame"
-          onClick={shutter}
-          disabled={scanning || installing !== null}
-        >
+        <div className="frame">
           {scannerReady ? <ScanLine size={56} /> : <Camera size={56} />}
           <p>
             {scanning ? 'Opening scanner…'
               : installing !== null ? `Enabling auto-scan… ${installing}%`
-              : scannerReady ? 'Tap to open the scanner'
-              : 'Tap to open your camera'}
+              : pages.length ? `${pages.length} page${pages.length > 1 ? 's' : ''} scanned`
+              : scannerReady ? 'Ready to scan'
+              : 'Ready to capture'}
           </p>
           <small>
             {scannerReady
-              ? 'Opens Google’s scanner as a full-screen camera — live edge detection, auto-crop, filters and multi-page, fully native. It is not shown inline here.'
+              ? 'Tap the scan button below to open Google’s scanner — a full-screen camera with live edge detection, auto-crop, filters and multi-page, fully native. It is not shown inline here.'
               : isAndroid && scannerReady === false
-                ? 'Auto-scan needs a small one-time Google Play services download — or tap here to scan with the plain camera now.'
-                : 'Opens your phone’s camera app. Crop manually after capture.'}
+                ? 'Auto-scan needs a small one-time Google Play services download — or use the plain camera below right away.'
+                : 'Tap the scan button below to open your phone’s camera. Crop manually after capture.'}
           </small>
-          {scannerReady && <span className="frame-cta">Open Scanner</span>}
           {isAndroid && scannerReady === false && installing === null && (
-            <span className="chip active" onClick={(e) => { e.stopPropagation(); enableAutoScan(); }} style={{ marginTop: 10 }}>Enable auto-scan</span>
+            <span className="chip active" onClick={enableAutoScan} style={{ marginTop: 10 }}>Enable auto-scan</span>
           )}
-        </button>
+        </div>
       </div>
       <div className="chips">
         {modes.map((m) => (
@@ -105,6 +102,7 @@ export default function ScanPage({
         </button>
         <button onClick={exportPdf} disabled={!pages.length || exporting}><FileText />{exporting ? '…' : 'PDF'}</button>
       </div>
+      {exportError && <p className="viewer-status error">{exportError}</p>}
       <div className="chips">
         {filters.map((f) => (
           <button key={f} className={activeFilter === f ? 'chip active' : 'chip'} onClick={() => setActiveFilter(f)}>{f}</button>

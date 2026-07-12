@@ -38,6 +38,35 @@ Folder" from the Tools grid opened the generic document-picker tool runner
 (which has no handler for it and would hang on "Working…" forever) instead of
 jumping to the real Secure Folder UI in Profile.
 
+A later pass fixed a batch of real bugs reported from a physical device: (1)
+**root-caused the Scan page's "PDF button does nothing" flow break** — full
+6000×4000-ish camera/scanner photos were being baked at native resolution
+into canvases and held as base64 for every page with no size cap, which is a
+well-known WebView OOM-crash trigger on Android; fixed by capping every baked
+page and every captured photo to 2200px on the long edge (verified: a
+4032×3024 test photo now bakes down to 2200×1649), and by wrapping export in
+a try/catch so any future failure shows a visible error instead of silently
+doing nothing; (2) **Image to PDF and JPG to PDF were completely non-functional**
+— they opened the same PDF-only document picker as every other tool, with no
+way to actually select images; replaced with a real multi-image file picker
+that builds a PDF directly; (3) **added a real "Import a PDF file" entry
+point**, both on the Files page and inside every tool's document picker, so
+external PDFs from the phone's file manager can enter the app at all — before
+this, every tool could only operate on PDFs the app itself had created; (4)
+fixed duplicate tool icons (Merge PDF/Reorder Pages and Watermark/Secure
+Folder were using the same icon); (5) removed a redundant second "open
+camera" button on the Scan page (the big frame panel and the shutter button
+both triggered the scanner) — the frame is now a status panel, the shutter is
+the one scan control; (6) simplified the Profile page (removed 3 redundant
+Company/Website/Developer cards that duplicated the brand card above them,
+added an app version row, added an honest "not logged in yet" account row
+instead of no login affordance at all); (7) shrunk the adaptive icon's fill
+another ~20% so the K mark reads more clearly, re-verified against the
+circular-mask simulation. Since a password-protected PDF can't be opened by
+plain pdf-lib/pdfjs, protected docs are now tagged and excluded from every
+other tool's picker with a visible note, and the in-app viewer shows a clear
+message instead of crashing when one is opened directly.
+
 **Still explicitly not built** (flagged rather than faked): Unlock PDF —
 no client-side/browser-safe library was found that can reliably *decrypt*
 an already password-protected PDF (the encryption library used above only
@@ -133,8 +162,8 @@ match.
 - [ ] Low-light warning
 - [ ] Glare warning
 - [x] Gallery import (native multi-picker via Capacitor Camera, with plain file-input fallback; ML Kit scanner also supports gallery import when `galleryImportAllowed` is on)
-- [ ] Import existing PDF for editing
-- [ ] Scan quality presets: Low / Medium / High / Original
+- [x] Import existing PDF for editing (real "Import a PDF file" entry point, on the Files page and inside every tool's document picker)
+- [ ] Scan quality presets: Low / Medium / High / Original (pages are now auto-capped to 2200px on the long edge to prevent OOM crashes, but this isn't a user-facing quality selector)
 
 ## Recommended native stack
 
@@ -232,9 +261,9 @@ match.
 - [x] Multiple-images-to-PDF export (real, filters/rotation/crop baked in)
 - [ ] Native Scan to PDF (camera capture → PDF works; no native Kotlin scanner behind it)
 - [x] Camera to PDF
-- [x] Image to PDF
-- [x] JPG to PDF
-- [x] PNG to PDF
+- [x] Image to PDF (fixed: previously opened the PDF-only document picker with no way to select an image, so it was non-functional as shipped; now opens a real multi-image picker)
+- [x] JPG to PDF (same fix, restricted to `image/jpeg` in the file picker)
+- [x] PNG to PDF (covered by the same image picker, `image/*` accepted)
 - [x] Searchable PDF (OCR word boxes placed as an invisible, selectable text layer over the scanned image)
 - [ ] Add scans to existing PDF
 - [x] Merge scanned documents (via Merge PDF tool)
@@ -443,7 +472,7 @@ match.
 
 # Phase 9 — Cloud, Account and Sharing
 
-- [ ] Email/phone/social login
+- [ ] Email/phone/social login (Profile now shows an honest "Not logged in — will use one shared Kuklabs account across all Kuklabs apps · Coming soon" row instead of no login affordance at all; still no working auth, no backend to authenticate against)
 - [ ] Guest/offline mode
 - [ ] Kuk Cloud
 - [ ] Google Drive

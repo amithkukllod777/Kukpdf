@@ -41,6 +41,7 @@ export default function App() {
   const [mode, setMode] = useState<ScanMode>('Document');
   const [activeFilter, setActiveFilter] = useState<FilterKind>('Auto');
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [viewerDoc, setViewerDoc] = useState<DocItem | null>(null);
   const [legalDoc, setLegalDoc] = useState<'privacy' | 'terms' | null>(null);
@@ -95,6 +96,7 @@ export default function App() {
   async function exportPdf() {
     if (!pages.length) return;
     setExporting(true);
+    setExportError(null);
     try {
       const name = `${mode} ${dateStamp()}.pdf`;
       const blob = await pagesToPdf(pages);
@@ -103,9 +105,20 @@ export default function App() {
       setDocs((d) => [doc, ...d]);
       setPages([]);
       setTab('files');
+    } catch (e: any) {
+      console.error('exportPdf failed', e);
+      setExportError(e?.message || 'Could not build the PDF. Try again with fewer pages.');
     } finally {
       setExporting(false);
     }
+  }
+
+  /** Brings an existing PDF from the device's file manager into the app's document store. */
+  async function importPdfFile(file: File): Promise<DocItem> {
+    const doc: DocItem = { id: crypto.randomUUID(), name: file.name, kind: 'pdf', pages: [], createdAt: Date.now(), size: file.size, blob: file };
+    await saveDoc(doc);
+    setDocs((d) => [doc, ...d]);
+    return doc;
   }
 
   function rotatePage(id: string) {
@@ -189,6 +202,7 @@ export default function App() {
             deletePage={deletePage}
             setCrop={setCrop}
             exporting={exporting}
+            exportError={exportError}
           />
         )}
         {tab === 'files' && (
@@ -199,6 +213,7 @@ export default function App() {
             onToggleFavorite={handleToggleFavorite}
             onToggleSecure={handleToggleSecure}
             unlockedSecure={unlockedSecure}
+            onImportPdf={importPdfFile}
           />
         )}
         {tab === 'profile' && (
@@ -229,6 +244,7 @@ export default function App() {
           onDone={handleDocFromTool}
           onCancel={() => setActiveTool(null)}
           onSaveSignature={handleSaveSignature}
+          onImportPdf={importPdfFile}
         />
       )}
       {viewerDoc && (

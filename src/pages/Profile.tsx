@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Trash2 } from 'lucide-react';
+import { LogIn, Sparkles, Trash2 } from 'lucide-react';
 import type { DocItem, SignatureItem, Tab } from '../types';
 import Header from '../components/Header';
 import { hasPin, setPin, clearPin, verifyPin } from '../capacitor/lock';
+import pkg from '../../package.json';
 
 export default function ProfilePage({ docs, signatures, onDeleteSignature, onUnlockSecure, setTab, onOpenLegal }: {
   docs: DocItem[];
@@ -87,11 +88,15 @@ export default function ProfilePage({ docs, signatures, onDeleteSignature, onUnl
         {msg && <p className="viewer-status">{msg}</p>}
       </div>
 
-      {['Company: Kuklabs Inc.', 'Website: kuklabs.com', 'Developer: Kuklabs Inc.'].map((x) => (
-        <div className="setting" key={x}><span>{x}</span></div>
-      ))}
+      <h2>Account</h2>
+      <div className="setting">
+        <span>Not logged in — will use one shared Kuklabs account across all Kuklabs apps</span>
+        <button disabled><LogIn size={14} /> Coming soon</button>
+      </div>
+
       <div className="setting"><span>Privacy Policy</span><button onClick={() => onOpenLegal('privacy')}>View</button></div>
       <div className="setting"><span>Terms of Service</span><button onClick={() => onOpenLegal('terms')}>View</button></div>
+      <div className="setting"><span>Version</span><span>{pkg.version}</span></div>
     </section>
   );
 }

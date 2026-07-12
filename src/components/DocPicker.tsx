@@ -1,19 +1,32 @@
-import { useState } from 'react';
-import { FileText } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { FileText, Upload } from 'lucide-react';
 import type { DocItem } from '../types';
 import { formatBytes } from '../utils';
 
-export default function DocPicker({ docs, multiple, onPick, onCancel, title }: {
+export default function DocPicker({ docs, multiple, onPick, onCancel, title, onImportPdf }: {
   docs: DocItem[];
   multiple?: boolean;
   onPick: (chosen: DocItem[]) => void;
   onCancel: () => void;
   title: string;
+  onImportPdf?: (file: File) => Promise<DocItem>;
 }) {
   const [ids, setIds] = useState<string[]>([]);
+  const [importing, setImporting] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
   const selectable = docs.filter((d) => !d.trashed);
   const pdfDocs = selectable.filter((d) => !d.passwordProtected);
   const hiddenProtectedCount = selectable.length - pdfDocs.length;
+
+  async function handleImport(file: File | undefined) {
+    if (!file || !onImportPdf) return;
+    setImporting(true);
+    try {
+      await onImportPdf(file);
+    } finally {
+      setImporting(false);
+    }
+  }
 
   function toggle(id: string) {
     setIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -47,6 +60,20 @@ export default function DocPicker({ docs, multiple, onPick, onCancel, title }: {
             )
           )}
         </div>
+        {onImportPdf && (
+          <>
+            <button className="wide" disabled={importing} onClick={() => importRef.current?.click()}>
+              <Upload size={16} /> {importing ? 'Importing…' : 'Import a PDF file'}
+            </button>
+            <input
+              ref={importRef}
+              hidden
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => { handleImport(e.target.files?.[0]); e.target.value = ''; }}
+            />
+          </>
+        )}
         <div className="actions">
           <button onClick={onCancel}>Cancel</button>
           {multiple && (

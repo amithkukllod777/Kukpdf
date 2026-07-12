@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { CheckCircle2, Download, Share2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, Download, Share2, Upload } from 'lucide-react';
 import type { DocItem, SignatureItem } from '../types';
 import DocPicker from './DocPicker';
 import PageManager from './PageManager';
@@ -18,6 +18,7 @@ import {
   stampImage,
   buildSearchablePdf,
 } from '../pdf/tools';
+import { imagesToPdf } from '../pdf/export';
 import { ocrImage, type OcrLang } from '../ocr';
 import { downloadBlob } from '../utils';
 import { sharePdf } from '../capacitor/share';
@@ -32,18 +33,21 @@ const UNSUPPORTED: Record<string, string> = {
 
 const NEEDS_MULTI = new Set(['Merge PDF']);
 const NEEDS_PAGE_MANAGER = new Set(['Delete Pages', 'Reorder Pages']);
+const IMAGE_SOURCE_TOOLS = new Set(['Image to PDF', 'JPG to PDF']);
 
-export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, onSaveSignature }: {
+export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, onSaveSignature, onImportPdf }: {
   tool: string;
   docs: DocItem[];
   signatures: SignatureItem[];
   onDone: (doc: DocItem) => void;
   onCancel: () => void;
   onSaveSignature: (sig: SignatureItem) => void;
+  onImportPdf: (file: File) => Promise<DocItem>;
 }) {
-  const [stage, setStage] = useState<'pick' | 'params' | 'running' | 'result' | 'unsupported'>(
-    UNSUPPORTED[tool] ? 'unsupported' : 'pick'
+  const [stage, setStage] = useState<'pick' | 'pick-images' | 'params' | 'running' | 'result' | 'unsupported'>(
+    UNSUPPORTED[tool] ? 'unsupported' : IMAGE_SOURCE_TOOLS.has(tool) ? 'pick-images' : 'pick'
   );
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [chosen, setChosen] = useState<DocItem[]>([]);
   const [progressText, setProgressText] = useState('');
   const [result, setResult] = useState<{ blob: Blob; name: string } | null>(null);
@@ -76,6 +80,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
         docs={docs}
         multiple={NEEDS_MULTI.has(tool)}
         onCancel={onCancel}
+        onImportPdf={onImportPdf}
         onPick={async (picked) => {
           setChosen(picked);
           if (NEEDS_PAGE_MANAGER.has(tool)) {
@@ -89,6 +94,42 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
           await run(picked);
         }}
       />
+    );
+  }
+
+  if (stage === 'pick-images') {
+    return (
+      <div className="modal"><div className="sheet">
+        <h2>{tool}</h2>
+        <p className="viewer-status">Choose one or more images from your gallery or file manager — they'll become pages in a new PDF, in the order picked.</p>
+        {error && <p className="viewer-status error">{error}</p>}
+        <div className="actions">
+          <button onClick={onCancel}>Cancel</button>
+          <button onClick={() => imageInputRef.current?.click()}><Upload size={16} /> Choose images</button>
+        </div>
+        <input
+          ref={imageInputRef}
+          hidden
+          type="file"
+          multiple
+          accept={tool === 'JPG to PDF' ? 'image/jpeg' : 'image/*'}
+          onChange={async (e) => {
+            const files = Array.from(e.target.files ?? []);
+            e.target.value = '';
+            if (!files.length) return;
+            setStage('running');
+            setProgressText(`Building PDF from ${files.length} image${files.length > 1 ? 's' : ''}…`);
+            try {
+              const blob = await imagesToPdf(files);
+              setResult({ blob, name: `${tool === 'JPG to PDF' ? 'JPG to PDF' : 'Image to PDF'} ${new Date().toISOString().slice(0, 10)}.pdf` });
+              setStage('result');
+            } catch (err: any) {
+              setError(err?.message || 'Could not build a PDF from those images');
+              setStage('pick-images');
+            }
+          }}
+        />
+      </div></div>
     );
   }
 
