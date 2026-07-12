@@ -29,13 +29,26 @@ when it's unavailable. That scanner integration is wired end-to-end and
 CI-built but **not yet verified on a physical device** — the native scanner
 UI itself can only be exercised on-device.
 
-**Still explicitly not built** (flagged rather than faked): password-protect/
-unlock PDF (pdf-lib has no encryption support), PDF annotation/freehand
-drawing, AI summarize/ask-PDF, cloud sync/login/accounts, subscriptions/
-payments, an admin dashboard, and any backend — all of Phases 9 (cloud
-parts)–13 below are unstarted. Home screen's search box and Files'
-Search/Tags/folders are still UI-only. Full per-item status below is
-updated to match.
+A later pass added real PDF password protection (`pdf-lib-plus-encrypt`, AES-128,
+verified end-to-end: encrypting then re-opening with pdfjs-dist confirms the
+file is unreadable without the password and correctly opens with it), wired
+the Home screen's search box to actually filter tools and files by name (it
+was decorative before), and fixed a dead-end bug where tapping "Secure
+Folder" from the Tools grid opened the generic document-picker tool runner
+(which has no handler for it and would hang on "Working…" forever) instead of
+jumping to the real Secure Folder UI in Profile.
+
+**Still explicitly not built** (flagged rather than faked): Unlock PDF —
+no client-side/browser-safe library was found that can reliably *decrypt*
+an already password-protected PDF (the encryption library used above only
+adds passwords, it doesn't remove them; the one real decrypt candidate,
+`qpdf-wasm`, is a single-maintainer, single-release alpha package judged too
+risky to ship). Would need a proper server-side tool like qpdf. Also still
+not built: PDF annotation/freehand drawing, AI summarize/ask-PDF, cloud
+sync/login/accounts, subscriptions/payments, an admin dashboard, and any
+backend — all of Phases 9 (cloud parts)–13 below are unstarted. Files'
+Tags/folders are still UI-only. Full per-item status below is updated to
+match.
 
 ## Product identity
 
@@ -94,7 +107,7 @@ updated to match.
 - [x] Download generated PDF
 - [x] In-app PDF viewer (renders pages to canvas; no more forced hand-off to an external PDF app)
 - [x] Local document list persists in IndexedDB (survives reload; no longer in-memory demo data)
-- [x] Most tool pages now run real client-side processing (merge/split/rotate/delete/reorder/duplicate/insert-blank/watermark/page-numbers/compress/repair/sign/OCR/searchable-PDF); Annotate, Password Protect, Unlock PDF, Summarize PDF and Ask PDF remain UI-only placeholders with an honest "not built yet" message instead of a fake success
+- [x] Most tool pages now run real client-side processing (merge/split/rotate/delete/reorder/duplicate/insert-blank/watermark/page-numbers/compress/repair/sign/OCR/searchable-PDF/password-protect); Annotate, Unlock PDF, Summarize PDF and Ask PDF remain UI-only placeholders with an honest "not built yet" message instead of a fake success
 
 # Phase 1 — Production Native Scanner
 
@@ -394,7 +407,7 @@ updated to match.
 - [x] Duplicate (pages; not whole documents)
 - [x] Delete
 - [ ] Restore
-- [ ] Search by filename (Home's search box is still a non-functional placeholder input)
+- [x] Search by filename (Home's search box filters both tools and files by name in real time)
 - [ ] Full-text OCR search
 - [ ] Tags
 - [ ] Sort by name/date/size/type (fixed newest-first)
@@ -406,9 +419,9 @@ updated to match.
 
 # Phase 8 — Security and Privacy
 
-- [ ] Password-protect PDF (pdf-lib does not support PDF encryption — needs a native/server crypto library; honest "not built yet" message shown in-app)
-- [ ] Remove PDF password where authorized (same limitation)
-- [ ] PDF encryption
+- [x] Password-protect PDF (real AES-128 encryption via `pdf-lib-plus-encrypt`; verified the output PDF rejects opening without the password and opens correctly with it)
+- [ ] Remove PDF password where authorized (no viable client-side decrypt library found; would need a server-side tool like qpdf — honest "not built yet" message shown in-app)
+- [x] PDF encryption (Password Protect tool, AES-128)
 - [x] Lock document (PIN-gated Secure Folder, per document)
 - [x] App PIN (SHA-256-hashed, checked via `@capacitor/preferences`; re-locks on app background/resume)
 - [ ] Fingerprint unlock

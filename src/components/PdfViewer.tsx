@@ -28,7 +28,13 @@ export default function PdfViewer({ blob }: { blob: Blob }) {
           if (!cancelled) container.appendChild(canvas);
         }
       } catch (e: any) {
-        if (!cancelled) setError(e?.message || 'Could not render this PDF');
+        if (!cancelled) {
+          setError(
+            e?.name === 'PasswordException'
+              ? 'This PDF is password-protected. The in-app viewer can\'t open it — download the file and open it in any PDF reader with your password.'
+              : e?.message || 'Could not render this PDF'
+          );
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

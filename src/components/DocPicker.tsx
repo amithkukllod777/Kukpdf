@@ -11,7 +11,9 @@ export default function DocPicker({ docs, multiple, onPick, onCancel, title }: {
   title: string;
 }) {
   const [ids, setIds] = useState<string[]>([]);
-  const pdfDocs = docs.filter((d) => !d.trashed);
+  const selectable = docs.filter((d) => !d.trashed);
+  const pdfDocs = selectable.filter((d) => !d.passwordProtected);
+  const hiddenProtectedCount = selectable.length - pdfDocs.length;
 
   function toggle(id: string) {
     setIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -22,6 +24,11 @@ export default function DocPicker({ docs, multiple, onPick, onCancel, title }: {
       <div className="sheet">
         <h2>{title}</h2>
         {pdfDocs.length === 0 && <p className="viewer-status">No documents yet — scan or import one first.</p>}
+        {hiddenProtectedCount > 0 && (
+          <p className="viewer-status">
+            {hiddenProtectedCount} password-protected {hiddenProtectedCount === 1 ? 'file is' : 'files are'} hidden here — tools can't open encrypted PDFs.
+          </p>
+        )}
         <div className="list">
           {pdfDocs.map((d) =>
             multiple ? (

@@ -11,6 +11,7 @@ import {
   compressScannedPdf,
   fileOrBlobToBytes,
   mergePdfs,
+  protectPdf,
   repairPdf,
   rotateAllPages,
   splitAllPages,
@@ -26,8 +27,7 @@ const UNSUPPORTED: Record<string, string> = {
   Annotate: 'Freehand annotation editing needs a full PDF-editing engine — not built yet.',
   'Summarize PDF': 'AI summaries need a backend LLM service — this app is currently backend-free (client-only). Not built yet.',
   'Ask PDF': 'Document chat needs a backend LLM + vector search service. Not built yet.',
-  'Password Protect': 'PDF encryption needs a native/server crypto library — pdf-lib (used here) does not support it. Not built yet.',
-  'Unlock PDF': 'Removing PDF passwords needs a native/server crypto library. Not built yet.',
+  'Unlock PDF': 'No reliable client-side library can decrypt an already-encrypted PDF (the encryption libraries checked only add passwords, they don\'t remove them). Not built yet — would need a server-side tool like qpdf.',
 };
 
 const NEEDS_MULTI = new Set(['Merge PDF']);
@@ -52,6 +52,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
   const [watermarkText, setWatermarkText] = useState('KukPDF');
   const [compressLevel, setCompressLevel] = useState<'low' | 'recommended' | 'high'>('recommended');
   const [ocrLang, setOcrLang] = useState<OcrLang>('eng');
+  const [pdfPassword, setPdfPassword] = useState('');
   const [ocrText, setOcrText] = useState<string | null>(null);
   const [alreadySaved, setAlreadySaved] = useState(false);
   const [resultNote, setResultNote] = useState<string | null>(null);
@@ -81,7 +82,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
             setStage('params');
             return;
           }
-          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF'].includes(tool)) {
+          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect'].includes(tool)) {
             setStage('params');
             return;
           }
@@ -130,7 +131,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
   }
 
   function makeDoc(name: string, blob: Blob): DocItem {
-    return { id: crypto.randomUUID(), name, kind: 'pdf', pages: [], createdAt: Date.now(), size: blob.size, blob };
+    return { id: crypto.randomUUID(), name, kind: 'pdf', pages: [], createdAt: Date.now(), size: blob.size, blob, passwordProtected: tool === 'Password Protect' };
   }
 
   function stripExt(name: string) {
@@ -180,6 +181,41 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
               const bytes = await fileOrBlobToBytes(chosen[0].blob);
               await saveOutput(await addWatermarkText(bytes, watermarkText || 'KukPDF'), `${stripExt(chosen[0].name)} (watermarked).pdf`);
             }}>Apply</button>
+          </div>
+        </div></div>
+      );
+    }
+    if (tool === 'Password Protect') {
+      return (
+        <div className="modal"><div className="sheet">
+          <h2>Password protect</h2>
+          <p className="viewer-status">Encrypts the PDF with AES-128 — anyone opening it will need this password.</p>
+          <input
+            type="password"
+            value={pdfPassword}
+            onChange={(e) => setPdfPassword(e.target.value)}
+            placeholder="Set a password"
+            autoFocus
+          />
+          {error && <p className="viewer-status error">{error}</p>}
+          <div className="actions">
+            <button onClick={onCancel}>Cancel</button>
+            <button
+              disabled={pdfPassword.length < 4}
+              onClick={async () => {
+                setStage('running');
+                setProgressText('Encrypting…');
+                try {
+                  const bytes = await fileOrBlobToBytes(chosen[0].blob);
+                  const out = await protectPdf(bytes, pdfPassword);
+                  setResultNote('Encrypted with your password. Any PDF reader will now ask for it before opening — remember it, there is no recovery. Other KukPDF tools and the in-app viewer can\'t open protected PDFs, so this file is excluded from their pickers.');
+                  await saveOutput(out, `${stripExt(chosen[0].name)} (protected).pdf`);
+                } catch (e: any) {
+                  setError(e?.message || 'Could not encrypt this PDF');
+                  setStage('params');
+                }
+              }}
+            >Protect</button>
           </div>
         </div></div>
       );

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Lock, MoreVertical, Share2, Star, Trash2 } from 'lucide-react';
+import { FileText, KeyRound, Lock, MoreVertical, Share2, Star, Trash2 } from 'lucide-react';
 import type { DocItem } from '../types';
 import { formatBytes } from '../utils';
 import { sharePdf } from '../capacitor/share';
@@ -35,6 +35,7 @@ export default function FileRow({ d, onOpen, onDelete, onToggleFavorite, onToggl
             {formatBytes(d.size)} · {new Date(d.createdAt).toLocaleDateString()}
             {d.favorite && <Star size={12} className="badge" />}
             {d.secure && <Lock size={12} className="badge" />}
+            {d.passwordProtected && <span title="Password protected"><KeyRound size={12} className="badge" /></span>}
           </p>
         </div>
       </button>

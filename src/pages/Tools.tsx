@@ -11,6 +11,8 @@ const toolGroups = [
   ['Security', ['Password Protect', 'Unlock PDF', 'Secure Folder']],
 ] as const;
 
+export const ALL_TOOLS: string[] = toolGroups.flatMap(([, tools]) => tools);
+
 export default function ToolsPage({ setTab, onOpenTool }: { setTab: (t: Tab) => void; onOpenTool: (tool: string) => void }) {
   return (
     <section>
@@ -20,7 +22,7 @@ export default function ToolsPage({ setTab, onOpenTool }: { setTab: (t: Tab) => 
           <h2>{group}</h2>
           <div className="grid">
             {tools.map((t) => (
-              <ToolCard key={t} label={t} onClick={() => (t === 'Scan to PDF' ? setTab('scan') : onOpenTool(t))} />
+              <ToolCard key={t} label={t} onClick={() => (t === 'Scan to PDF' ? setTab('scan') : t === 'Secure Folder' ? setTab('profile') : onOpenTool(t))} />
             ))}
           </div>
         </div>

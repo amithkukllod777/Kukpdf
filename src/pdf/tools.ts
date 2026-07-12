@@ -1,4 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
+import { PDFDocument as PDFDocumentEncrypt } from 'pdf-lib-plus-encrypt';
 import { renderPageToDataUrl, loadPdfDoc, destroyPdfDoc } from './render';
 import { ocrImageWithWords, type OcrLang } from '../ocr';
 
@@ -154,6 +155,23 @@ export async function stampImage(bytes: Uint8Array, pageIndex: number, pngDataUr
   const w = wRatio * width;
   const h = hRatio * height;
   page.drawImage(png, { x: xRatio * width, y: height - yRatio * height - h, width: w, height: h });
+  return doc.save();
+}
+
+/**
+ * Real PDF password protection: AES-128 encryption via pdf-lib-plus-encrypt
+ * (a pdf-lib fork with a genuine PDFSecurity implementation — plain pdf-lib has
+ * no encryption support at all). Opening the file with any PDF reader will now
+ * require the given password.
+ */
+export async function protectPdf(bytes: Uint8Array, password: string): Promise<Uint8Array> {
+  const doc = await PDFDocumentEncrypt.load(bytes);
+  await doc.encrypt({
+    userPassword: password,
+    ownerPassword: password,
+    pdfVersion: '1.7',
+    permissions: { printing: 'highResolution', modifying: false, copying: false, annotating: true, fillingForms: true, contentAccessibility: true, documentAssembly: false },
+  });
   return doc.save();
 }
 
