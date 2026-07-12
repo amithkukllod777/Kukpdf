@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogIn, Sparkles, Trash2 } from 'lucide-react';
+import { Sparkles, Trash2, User } from 'lucide-react';
 import type { DocItem, SignatureItem, Tab } from '../types';
 import Header from '../components/Header';
 import { hasPin, setPin, clearPin, verifyPin } from '../capacitor/lock';
@@ -25,15 +25,15 @@ export default function ProfilePage({ docs, signatures, onDeleteSignature, onUnl
   return (
     <section>
       <Header title="Profile" sub="Kuklabs Inc. · kuklabs.com" />
-      <div className="card brand-card">
-        <img src="/kukpdf-mark.png" alt="KukPDF" />
-        <div><b>KukPDF</b><p>Smart PDF Scanner & Tools</p><small>A Kuklabs Product</small></div>
+      <div className="acct-row">
+        <div className="avatar"><User size={20} /></div>
+        <div className="tx"><b>Not logged in</b><span>One shared Kuklabs account, across every app</span></div>
+        <span className="cta">Soon</span>
       </div>
       <div className="card pro">
         <Sparkles /><b>KukPDF Pro</b>
         <p>Unlimited scans, batch OCR, cloud sync, no watermark — coming soon (needs a backend, not built yet).</p>
       </div>
-      <div className="card"><b>Usage</b><p>{docs.length} documents saved on this device</p></div>
 
       <h2>Saved signatures</h2>
       <div className="list">
@@ -88,15 +88,11 @@ export default function ProfilePage({ docs, signatures, onDeleteSignature, onUnl
         {msg && <p className="viewer-status">{msg}</p>}
       </div>
 
-      <h2>Account</h2>
-      <div className="setting">
-        <span>Not logged in — will use one shared Kuklabs account across all Kuklabs apps</span>
-        <button disabled><LogIn size={14} /> Coming soon</button>
-      </div>
-
+      <h2>About</h2>
+      <div className="setting"><span>Documents on this device</span><span style={{ fontWeight: 800 }}>{docs.length}</span></div>
       <div className="setting"><span>Privacy Policy</span><button onClick={() => onOpenLegal('privacy')}>View</button></div>
       <div className="setting"><span>Terms of Service</span><button onClick={() => onOpenLegal('terms')}>View</button></div>
-      <div className="setting"><span>Version</span><span>{pkg.version}</span></div>
+      <div className="setting"><span>Version</span><span style={{ fontWeight: 800 }}>{pkg.version}</span></div>
     </section>
   );
 }

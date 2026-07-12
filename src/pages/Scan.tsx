@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Camera, Crop, FileText, ImagePlus, RotateCw, ScanLine, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Camera, Crop, FileText, ImagePlus, Plus, RotateCw, ScanLine, Trash2 } from 'lucide-react';
 import type { FilterKind, PageItem, ScanMode } from '../types';
 import Header from '../components/Header';
 import CropEditor from '../components/CropEditor';
@@ -9,16 +9,15 @@ import { installNativeScannerModule, isNativeScannerAvailable, scanWithNativeSca
 import { Capacitor } from '@capacitor/core';
 
 export default function ScanPage({
-  pages, mode, setMode, activeFilter, setActiveFilter, fileRef, importImages,
+  pages, mode, setMode, activeFilter, setActiveFilter,
   addPages, exportPdf, rotatePage, deletePage, setCrop, exporting, exportError,
+  onImportPhotos, onImportPdf,
 }: {
   pages: PageItem[];
   mode: ScanMode;
   setMode: (m: ScanMode) => void;
   activeFilter: FilterKind;
   setActiveFilter: (f: FilterKind) => void;
-  fileRef: React.RefObject<HTMLInputElement | null>;
-  importImages: (files: FileList | null) => void;
   addPages: (dataUrls: string[]) => void;
   exportPdf: () => void;
   rotatePage: (id: string) => void;
@@ -26,12 +25,15 @@ export default function ScanPage({
   setCrop: (id: string, crop: PageItem['crop']) => void;
   exporting: boolean;
   exportError: string | null;
+  onImportPhotos: () => void;
+  onImportPdf: (file: File) => Promise<void>;
 }) {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [cropping, setCropping] = useState<string | null>(null);
   const [scannerReady, setScannerReady] = useState<boolean | null>(null); // null = still checking
   const [installing, setInstalling] = useState<number | null>(null); // install progress %, null = not installing
   const [scanning, setScanning] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   const selected = pages.find((p) => p.id === selectedPage);
   const croppingPage = pages.find((p) => p.id === cropping);
   const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
@@ -65,58 +67,90 @@ export default function ScanPage({
     if (dataUrl) addPages([dataUrl]);
   }
 
+  const busy = scanning || installing !== null;
+
   return (
     <section>
       <Header title="Scan" sub="Document · ID Card · Book · Receipt · QR" />
-      <div className="camera">
-        <div className="frame">
-          {scannerReady ? <ScanLine size={56} /> : <Camera size={56} />}
-          <p>
-            {scanning ? 'Opening scanner…'
-              : installing !== null ? `Enabling auto-scan… ${installing}%`
-              : pages.length ? `${pages.length} page${pages.length > 1 ? 's' : ''} scanned`
-              : scannerReady ? 'Ready to scan'
-              : 'Ready to capture'}
-          </p>
-          <small>
-            {scannerReady
-              ? 'Tap the scan button below to open Google’s scanner — a full-screen camera with live edge detection, auto-crop, filters and multi-page, fully native. It is not shown inline here.'
-              : isAndroid && scannerReady === false
-                ? 'Auto-scan needs a small one-time Google Play services download — or use the plain camera below right away.'
-                : 'Tap the scan button below to open your phone’s camera. Crop manually after capture.'}
-          </small>
-          {isAndroid && scannerReady === false && installing === null && (
-            <span className="chip active" onClick={enableAutoScan} style={{ marginTop: 10 }}>Enable auto-scan</span>
-          )}
-        </div>
-      </div>
       <div className="chips">
         {modes.map((m) => (
           <button key={m} className={mode === m ? 'chip active' : 'chip'} onClick={() => setMode(m)}>{m}</button>
         ))}
       </div>
-      <div className="capture">
-        <button onClick={() => fileRef.current?.click()}><ImagePlus />Import</button>
-        <button className="shutter" onClick={shutter} disabled={scanning || installing !== null}>
-          {scannerReady ? <ScanLine /> : <Camera />}
-        </button>
-        <button onClick={exportPdf} disabled={!pages.length || exporting}><FileText />{exporting ? '…' : 'PDF'}</button>
-      </div>
+
+      {pages.length === 0 ? (
+        <>
+          <div className="scan-hero">
+            <b>Ready when you are ✨</b>
+            <span>
+              {scannerReady
+                ? "Google's live scanner — edge detect, auto-crop, multi-page"
+                : isAndroid && scannerReady === false
+                  ? 'Auto-scan needs a small one-time download — or use the plain camera now'
+                  : 'Opens your camera — crop manually after capture'}
+            </span>
+            <button className="scan-cta" onClick={shutter} disabled={busy}>
+              {scanning ? 'Opening scanner…'
+                : installing !== null ? `Enabling auto-scan… ${installing}%`
+                : <>{scannerReady ? <ScanLine /> : <Camera />}Scan a document</>}
+            </button>
+          </div>
+          {isAndroid && scannerReady === false && installing === null && (
+            <div className="chips" style={{ paddingBottom: 0 }}>
+              <button className="chip active" onClick={enableAutoScan}>Enable auto-scan</button>
+            </div>
+          )}
+          <div className="scan-secondary">
+            <button onClick={onImportPhotos}><ImagePlus />Import photos</button>
+            <button onClick={() => pdfInputRef.current?.click()}><FileText />Import PDF</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="scan-status-mini">
+            <span className="dot" />
+            <b>{pages.length} page{pages.length > 1 ? 's' : ''} scanned</b>
+            <span>· keep going or save</span>
+          </div>
+          <div className="pages">
+            {pages.map((p, i) => (
+              <button key={p.id} onClick={() => setSelectedPage(p.id)}>
+                <img src={p.dataUrl} style={{ filter: filterCss(p.filter), transform: `rotate(${p.rotation}deg)` }} />
+                <span>{i + 1}</span>
+              </button>
+            ))}
+            <button className="add-page" onClick={shutter} disabled={busy}><Plus /></button>
+          </div>
+          <h2>Filter</h2>
+          <div className="chips" style={{ paddingTop: 0 }}>
+            {filters.map((f) => (
+              <button key={f} className={activeFilter === f ? 'chip active' : 'chip'} onClick={() => setActiveFilter(f)}>{f}</button>
+            ))}
+          </div>
+          <div className="export-row">
+            <button onClick={shutter} disabled={busy}>
+              {scannerReady ? <ScanLine /> : <Camera />}{scanning ? 'Opening…' : 'Scan more'}
+            </button>
+            <button onClick={exportPdf} disabled={exporting}>
+              <FileText />{exporting ? 'Saving…' : 'Save as PDF'}
+            </button>
+          </div>
+        </>
+      )}
       {exportError && <p className="viewer-status error">{exportError}</p>}
-      <div className="chips">
-        {filters.map((f) => (
-          <button key={f} className={activeFilter === f ? 'chip active' : 'chip'} onClick={() => setActiveFilter(f)}>{f}</button>
-        ))}
-      </div>
-      <h2>Pages ({pages.length})</h2>
-      <div className="pages">
-        {pages.map((p, i) => (
-          <button key={p.id} onClick={() => setSelectedPage(p.id)}>
-            <img src={p.dataUrl} style={{ filter: filterCss(p.filter), transform: `rotate(${p.rotation}deg)` }} />
-            <span>{i + 1}</span>
-          </button>
-        ))}
-      </div>
+
+      <input
+        ref={pdfInputRef}
+        hidden
+        type="file"
+        accept="application/pdf"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) await onImportPdf(file);
+        }}
+      />
+
       {selected && (
         <div className="modal">
           <div className="sheet">

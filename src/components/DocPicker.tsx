@@ -62,7 +62,7 @@ export default function DocPicker({ docs, multiple, onPick, onCancel, title, onI
         </div>
         {onImportPdf && (
           <>
-            <button className="wide" disabled={importing} onClick={() => importRef.current?.click()}>
+            <button className="primary wide" disabled={importing} onClick={() => importRef.current?.click()}>
               <Upload size={16} /> {importing ? 'Importing…' : 'Import a PDF file'}
             </button>
             <input

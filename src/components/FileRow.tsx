@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { FileText, KeyRound, Lock, MoreVertical, Share2, Star, Trash2 } from 'lucide-react';
+import { KeyRound, Lock, MoreVertical, Share2, Star, Trash2 } from 'lucide-react';
 import type { DocItem } from '../types';
 import { formatBytes } from '../utils';
 import { sharePdf } from '../capacitor/share';
+
+/* Stable per-document gradient placeholder when no page-1 render is available. */
+function thumbClass(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h + id.charCodeAt(i)) % 3;
+  return ['t1', 't2', 't3'][h];
+}
 
 export default function FileRow({ d, onOpen, onDelete, onToggleFavorite, onToggleSecure }: {
   d: DocItem;
@@ -28,7 +35,13 @@ export default function FileRow({ d, onOpen, onDelete, onToggleFavorite, onToggl
   return (
     <div className="file" ref={rowRef}>
       <button className="file-open" onClick={onOpen}>
-        <FileText />
+        {d.pages[0]?.dataUrl ? (
+          <img className="file-thumb-img" src={d.pages[0].dataUrl} alt="" />
+        ) : (
+          <div className={`file-thumb ${thumbClass(d.id)}`}>
+            <div className="lines"><i /><i /><i /></div>
+          </div>
+        )}
         <div>
           <b>{d.name}</b>
           <p>

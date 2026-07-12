@@ -184,7 +184,7 @@ export default function App() {
       </aside>
       <main>
         {tab === 'home' && (
-          <HomePage setTab={setTab} docs={docs} onImportClick={importFromGallery} onOpenTool={setActiveTool} onOpenDoc={setViewerDoc} />
+          <HomePage setTab={setTab} docs={docs} onOpenTool={setActiveTool} onOpenDoc={setViewerDoc} />
         )}
         {tab === 'tools' && <ToolsPage setTab={setTab} onOpenTool={setActiveTool} />}
         {tab === 'scan' && (
@@ -194,8 +194,6 @@ export default function App() {
             setMode={setMode}
             activeFilter={activeFilter}
             setActiveFilter={setActiveFilter}
-            fileRef={fileRef}
-            importImages={importImages}
             addPages={addPages}
             exportPdf={exportPdf}
             rotatePage={rotatePage}
@@ -203,6 +201,8 @@ export default function App() {
             setCrop={setCrop}
             exporting={exporting}
             exportError={exportError}
+            onImportPhotos={importFromGallery}
+            onImportPdf={async (file) => { await importPdfFile(file); setTab('files'); }}
           />
         )}
         {tab === 'files' && (
@@ -229,7 +229,12 @@ export default function App() {
       </main>
       <nav className="bottom">
         {navItems.map((n) => (
-          <button key={n.id} className={tab === n.id ? 'active' : ''} onClick={() => setTab(n.id)}>
+          <button
+            key={n.id}
+            className={`${tab === n.id ? 'active' : ''}${n.id === 'scan' ? ' scan-fab' : ''}`}
+            onClick={() => setTab(n.id)}
+            aria-label={n.label}
+          >
             <n.icon size={20} /><span>{n.label}</span>
           </button>
         ))}

@@ -30,7 +30,7 @@ export default function FilesPage({ docs, onOpen, onDelete, onToggleFavorite, on
   return (
     <section>
       <Header title="Files" sub={`${visible.length} documents`} />
-      <button className="wide" disabled={importing} onClick={() => importRef.current?.click()}>
+      <button className="primary wide" disabled={importing} onClick={() => importRef.current?.click()}>
         <Upload size={16} /> {importing ? 'Importing…' : 'Import a PDF from this device'}
       </button>
       <input

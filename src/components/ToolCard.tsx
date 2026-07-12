@@ -28,11 +28,37 @@ const toolIcon: Record<string, any> = {
   'Secure Folder': ShieldCheck,
 };
 
+/* One colour per tool category: Create=blue, Organize=amber, Optimize=mint,
+   Edit=purple, OCR & AI=mint, Security=coral. */
+const toolColor: Record<string, string> = {
+  'Scan to PDF': 'c-blue',
+  'Image to PDF': 'c-blue',
+  'JPG to PDF': 'c-blue',
+  'Merge PDF': 'c-amber',
+  'Split PDF': 'c-amber',
+  'Rotate PDF': 'c-amber',
+  'Delete Pages': 'c-amber',
+  'Reorder Pages': 'c-amber',
+  'Compress PDF': 'c-mint',
+  'Repair PDF': 'c-mint',
+  'Sign PDF': 'c-purple',
+  Watermark: 'c-purple',
+  'Page Numbers': 'c-purple',
+  Annotate: 'c-purple',
+  'Image to Text': 'c-mint',
+  'Searchable PDF': 'c-mint',
+  'Summarize PDF': 'c-purple',
+  'Ask PDF': 'c-purple',
+  'Password Protect': 'c-coral',
+  'Unlock PDF': 'c-coral',
+  'Secure Folder': 'c-coral',
+};
+
 export default function ToolCard({ label, onClick }: { label: string; onClick: () => void }) {
   const Icon = toolIcon[label] || FileText;
   return (
-    <button className="tool" onClick={onClick}>
-      <Icon size={22} />
+    <button className={`tool ${toolColor[label] || 'c-blue'}`} onClick={onClick}>
+      <span className="tool-badge"><Icon /></span>
       <span>{label}</span>
     </button>
   );
