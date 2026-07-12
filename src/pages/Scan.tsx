@@ -68,25 +68,30 @@ export default function ScanPage({
     <section>
       <Header title="Scan" sub="Document · ID Card · Book · Receipt · QR" />
       <div className="camera">
-        <div className="frame">
+        <button
+          className="frame"
+          onClick={shutter}
+          disabled={scanning || installing !== null}
+        >
           {scannerReady ? <ScanLine size={56} /> : <Camera size={56} />}
           <p>
             {scanning ? 'Opening scanner…'
               : installing !== null ? `Enabling auto-scan… ${installing}%`
-              : scannerReady ? 'Tap the shutter for auto edge-detect & crop'
-              : 'Tap the shutter to use your camera'}
+              : scannerReady ? 'Tap to open the scanner'
+              : 'Tap to open your camera'}
           </p>
           <small>
             {scannerReady
-              ? 'Google ML Kit Document Scanner — live edge detection, auto-crop, filters and multi-page, fully native.'
+              ? 'Opens Google’s scanner as a full-screen camera — live edge detection, auto-crop, filters and multi-page, fully native. It is not shown inline here.'
               : isAndroid && scannerReady === false
-                ? 'Auto-scan needs a small one-time Google Play services download.'
-                : 'Native camera capture via Capacitor. Crop manually after capture.'}
+                ? 'Auto-scan needs a small one-time Google Play services download — or tap here to scan with the plain camera now.'
+                : 'Opens your phone’s camera app. Crop manually after capture.'}
           </small>
+          {scannerReady && <span className="frame-cta">Open Scanner</span>}
           {isAndroid && scannerReady === false && installing === null && (
-            <button className="chip active" onClick={enableAutoScan} style={{ marginTop: 10 }}>Enable auto-scan</button>
+            <span className="chip active" onClick={(e) => { e.stopPropagation(); enableAutoScan(); }} style={{ marginTop: 10 }}>Enable auto-scan</span>
           )}
-        </div>
+        </button>
       </div>
       <div className="chips">
         {modes.map((m) => (
