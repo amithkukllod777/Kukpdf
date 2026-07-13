@@ -86,6 +86,7 @@ main{max-width:820px;margin:auto;padding:calc(28px + env(safe-area-inset-top)) 1
 .qt-card:active{transform:scale(.98)}
 .qt-ico{width:54px;height:54px;border-radius:15px;display:grid;place-items:center;flex:none}
 .qt-card b{font-size:14px;font-weight:600;color:var(--ink)}
+.pdf-red{color:#E11D1C}
 .home-h2{text-transform:none;letter-spacing:-.01em;color:var(--ink);font-weight:700;font-size:17px}
 .sync-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
 .sync-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--p-surface);color:var(--p);flex:none}

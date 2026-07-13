@@ -38,6 +38,13 @@ export default function HomePage({ setTab, docs, onOpenTool, onOpenDoc }: {
 
   const recent = docs.filter((d) => !d.trashed).slice(0, 4);
 
+  // Render a tool label with the word "PDF" in the brand red, matching the wordmark.
+  const pdfLabel = (s: string) => {
+    const i = s.indexOf('PDF');
+    if (i < 0) return s;
+    return <>{s.slice(0, i)}<span className="pdf-red">PDF</span>{s.slice(i + 3)}</>;
+  };
+
   return (
     <section>
       <div className="home-top">
@@ -76,7 +83,7 @@ export default function HomePage({ setTab, docs, onOpenTool, onOpenDoc }: {
                 <span className="qt-ico" style={{ background: `${t.color}1a`, color: t.color }}>
                   <t.icon size={24} />
                 </span>
-                <b>{t.label}</b>
+                <b>{pdfLabel(t.label)}</b>
               </button>
             ))}
           </div>
