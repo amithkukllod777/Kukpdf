@@ -58,6 +58,13 @@ the login screen** (version lives only in Profile → About). Not built: the
 compact country-selector chip (not in the approved reference; India +91 default,
 honest note in code) — E.164 submission works regardless.
 
+**Auth Pack V4 — App Version Display Policy:** version now appears ONLY as the
+bottom-most muted, centre-aligned footer in Profile → About this app (12px,
+`#98A2B3`, weight 400, not accent) in the `Version 0.1.0 (Build 1)` format; no
+version on Login/Sign Up/OTP/Forgot/Reset (Powered by Kuklabs stays the last
+auth element); no release channel/environment/commit hash exposed. V4's other
+tokens/content are identical values to V3 (only reorganized), already satisfied.
+
 **Google sign-in — now wired end-to-end (browser + deep-link, §3.1):** the owner
 registered `com.kuklabs.pdf` + the release-keystore SHA-1/SHA-256 in the shared
 Firebase/Google Cloud project (needed for FCM/Phone-Auth/google-services.json).
