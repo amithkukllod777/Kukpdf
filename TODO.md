@@ -58,6 +58,15 @@ the login screen** (version lives only in Profile → About). Not built: the
 compact country-selector chip (not in the approved reference; India +91 default,
 honest note in code) — E.164 submission works regardless.
 
+**Scanner-first launch:** on a native cold open, KukPDF goes straight to the
+Scan tab and auto-launches a fresh capture (real ML Kit scanner when ready,
+plain camera otherwise). Fires exactly once per launch (consumed immediately —
+never re-triggers on tab switches or background resumes), and never on web
+(dev/preview respects the URL path). If the user cancels the scanner they land
+on a clean Scan page and can tap to scan again; the next app open starts fresh.
+Wiring: `initialTab()` → `scan` on native (`App.tsx`); `autoScan` state +
+`ScanPage` `autoStart`/`onAutoStartDone` one-shot effect (`Scan.tsx`).
+
 **Auth Pack V4 — App Version Display Policy:** version now appears ONLY as the
 bottom-most muted, centre-aligned footer in Profile → About this app (12px,
 `#98A2B3`, weight 400, not accent) in the `Version 0.1.0 (Build 1)` format; no

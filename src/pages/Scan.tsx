@@ -11,7 +11,7 @@ import { Capacitor } from '@capacitor/core';
 export default function ScanPage({
   pages, mode, setMode, activeFilter, setActiveFilter,
   addPages, exportPdf, rotatePage, deletePage, setCrop, exporting, exportError,
-  onImportPhotos, onImportPdf,
+  onImportPhotos, onImportPdf, autoStart, onAutoStartDone,
 }: {
   pages: PageItem[];
   mode: ScanMode;
@@ -27,6 +27,8 @@ export default function ScanPage({
   exportError: string | null;
   onImportPhotos: () => void;
   onImportPdf: (file: File) => Promise<void>;
+  autoStart?: boolean;
+  onAutoStartDone?: () => void;
 }) {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [cropping, setCropping] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export default function ScanPage({
   const [installing, setInstalling] = useState<number | null>(null); // install progress %, null = not installing
   const [scanning, setScanning] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  const autoFired = useRef(false);
   const selected = pages.find((p) => p.id === selectedPage);
   const croppingPage = pages.find((p) => p.id === cropping);
   const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
@@ -41,6 +44,21 @@ export default function ScanPage({
   useEffect(() => {
     isNativeScannerAvailable().then(setScannerReady);
   }, []);
+
+  // Scanner-first launch: open a fresh capture automatically the first time the
+  // app is opened (native only). Waits until scanner readiness is known so it
+  // picks the real ML Kit scanner when available, plain camera otherwise. Fires
+  // exactly once per launch — consumed immediately so tab switches never re-fire.
+  useEffect(() => {
+    if (!autoStart || autoFired.current) return;
+    if (!Capacitor.isNativePlatform()) return;
+    if (scannerReady === null) return;
+    if (pages.length > 0) return;
+    autoFired.current = true;
+    onAutoStartDone?.();
+    void shutter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, scannerReady]);
 
   async function enableAutoScan() {
     setInstalling(0);

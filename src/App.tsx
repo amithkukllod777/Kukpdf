@@ -19,12 +19,16 @@ import { listDocs, saveDoc, deleteDoc, listSignatures, saveSignature, deleteSign
 import { pickFromGallery } from './capacitor/camera';
 import { hasPin } from './capacitor/lock';
 import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import { exchangeGoogleCode, getCurrentUser, signOut, type KuklabsUser } from './kuklabs/authClient';
 
 const pathToTab: Record<string, Tab> = { '/': 'home', '/tools': 'tools', '/scan': 'scan', '/files': 'files', '/profile': 'profile' };
 const tabToPath: Record<Tab, string> = { home: '/', tools: '/tools', scan: '/scan', files: '/files', profile: '/profile' };
 
+// KukPDF is a scanner-first app: on a native cold launch, open straight to Scan
+// and auto-start a fresh capture. On web (dev/preview) respect the URL path.
 function initialTab(): Tab {
+  if (Capacitor.isNativePlatform()) return 'scan';
   return pathToTab[window.location.pathname] ?? 'home';
 }
 
@@ -52,6 +56,9 @@ export default function App() {
   const [locked, setLocked] = useState<boolean | null>(null); // null = still checking
   const [user, setUser] = useState<KuklabsUser | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  // Fires the scanner once on a native cold launch (consumed after first run so
+  // it never re-triggers on tab switches or resumes).
+  const [autoScan, setAutoScan] = useState(Capacitor.isNativePlatform());
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -232,6 +239,8 @@ export default function App() {
             exportError={exportError}
             onImportPhotos={importFromGallery}
             onImportPdf={async (file) => { await importPdfFile(file); setTab('files'); }}
+            autoStart={autoScan}
+            onAutoStartDone={() => setAutoScan(false)}
           />
         )}
         {tab === 'files' && (
