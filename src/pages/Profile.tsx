@@ -114,11 +114,10 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
         ))}
       </div>
 
-      <h2>About</h2>
+      <h2>About this app</h2>
       <div className="setting"><span>Documents on this device</span><span style={{ fontWeight: 700 }}>{docs.length}</span></div>
       <div className="setting"><span>Privacy Policy</span><button onClick={() => onOpenLegal('privacy')}>View</button></div>
       <div className="setting"><span>Terms of Use</span><button onClick={() => onOpenLegal('terms')}>View</button></div>
-      <div className="setting"><span>Version</span><span style={{ color: 'var(--muted)' }}>{versionLabel}</span></div>
 
       {user && (
         <button className="wide" style={{ background: 'transparent', color: 'var(--error)', fontWeight: 600, minHeight: 48, marginTop: 8 }} onClick={onSignOut}>
@@ -126,7 +125,10 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
         </button>
       )}
 
+      {/* Version — Kuklabs App Version Display Policy: bottom-most muted,
+          centre-aligned footer only; never on auth screens; no channel/commit. */}
       <p className="powered">Powered by <b>Kuklabs</b></p>
+      <p className="about-version">{versionLabel}</p>
     </section>
   );
 }
