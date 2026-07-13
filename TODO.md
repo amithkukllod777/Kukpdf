@@ -45,9 +45,21 @@ session system or Google client** — exactly per the mandate. Restructured
 Profile to §16 (identity card, Security, About with `Version X.Y.Z (Build N)`,
 Sign out, Powered by Kuklabs). Central brand config in `src/brand.ts` (§4).
 
-**Still blocked on owner infra (not code):** "Continue with Google" needs the
-Android OAuth client + SHA fingerprints registered in the shared Google Cloud
-project; a `pdf.kuklabs.com` subdomain enables shared-cookie SSO on web. The
+**Google sign-in — now wired end-to-end (browser + deep-link, §3.1):** the owner
+registered `com.kuklabs.pdf` + the release-keystore SHA-1/SHA-256 in the shared
+Firebase/Google Cloud project (needed for FCM/Phone-Auth/google-services.json).
+The mandated login flow itself is browser+deep-link: KukPDF now passes
+`?app=kukpdf` to the shared `/api/auth/google/start`, catches the
+`kukpdf://auth?code=…` deep-link return (`appUrlOpen` in App.tsx), and trades the
+one-time code for a bearer token via `/api/auth/google/app-exchange`. CI injects
+the `kukpdf://auth` intent-filter into AndroidManifest (`android-ci/patch-manifest.mjs`).
+Paired backend change: `kukpdf` added to `APP_SCHEMES` in kukbook-erp
+(`server/googleAuth.ts`, on branch `claude/dekho-pdf-android-repo-9ai9x9`).
+**To go live it needs: (1) that kukbook-erp branch merged + deployed to prod,
+(2) a real-device test** — not yet verified end-to-end.
+
+**Still blocked on owner infra (not code):** a `pdf.kuklabs.com` subdomain
+enables shared-cookie SSO on web. The
 `AUTH_BASE` constant points at the shared backend (`www.kuklabs.com`) and swaps
 to `auth.kuklabs.com` once that host is live. Cloud document sync (tying files
 to the Kuklabs userId) is a future backend task — today documents remain
