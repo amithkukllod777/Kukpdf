@@ -7,7 +7,11 @@ android.signingConfigs {
         storeFile file(System.getenv('KUKPDF_KEYSTORE_PATH') ?: 'release.keystore')
         storePassword System.getenv('KUKPDF_KEYSTORE_PASSWORD')
         keyAlias System.getenv('KUKPDF_KEY_ALIAS')
-        keyPassword System.getenv('KUKPDF_KEY_PASSWORD')
+        // This is a PKCS12 keystore, which has no separate key password — the
+        // private key is protected by the store password. Use the store password
+        // for the key (and fall back to KUKPDF_KEY_PASSWORD only if ever set for a
+        // future non-PKCS12/JKS keystore).
+        keyPassword System.getenv('KUKPDF_KEYSTORE_PASSWORD') ?: System.getenv('KUKPDF_KEY_PASSWORD')
     }
 }
 android.buildTypes.release.signingConfig = android.signingConfigs.release
