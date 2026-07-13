@@ -40,12 +40,15 @@ Sign in), Pro, Security (app PIN/Secure Folder), About with
 `Version X.Y.Z (Build N)` (`src/brand.ts`) + Powered by Kuklabs, Sign out.
 
 **Honest status:** email/password + OTP login is a REAL working path against the
-shared backend (bearer-token flow). Blocked on owner infra: "Continue with
-Google" needs the Android OAuth client + SHA registered in the shared Google
-Cloud project; a `pdf.kuklabs.com` subdomain gives shared-cookie SSO on web.
-Documents still live on-device in IndexedDB until cloud sync ships. The
-`AUTH_BASE` in `authClient.ts` points at the shared backend (`www.kuklabs.com`);
-swap to `auth.kuklabs.com` when that host is live. **Never fake a login.**
+shared backend (bearer-token flow). `AUTH_BASE` in `authClient.ts` is
+`https://pdf.kuklabs.com` — KukPDF's own subdomain on the single shared server
+(registered in the shared Google OAuth client: JS origin + `/api/auth/google/
+callback` redirect URI). "Continue with Google" is fully wired (browser +
+`kukpdf://auth` deep-link); it goes live the moment the backend `APP_SCHEMES`
+change (kukbook-erp PR #914 — adds `kukpdf`) is deployed to production. The
+Android OAuth App registration + release-keystore SHA-1/SHA-256 are already in
+Firebase. Documents still live on-device in IndexedDB until cloud sync ships.
+**Never fake a login.**
 
 ## Repo map
 

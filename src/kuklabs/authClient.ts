@@ -10,10 +10,14 @@ import { Preferences } from '@capacitor/preferences';
  * it back as `Authorization: Bearer` on authed calls (same pattern as KukChat/
  * KukKeep mobile).
  *
- * Base URL is the shared backend. Swap to `https://auth.kuklabs.com` once that
- * dedicated host is live; today the verified auth surface is on the main app.
+ * Base URL is KukPDF's own subdomain on the shared backend. `pdf.kuklabs.com`
+ * is registered in the shared Google OAuth client (JS origin + `/api/auth/
+ * google/callback` redirect URI) and serves the same DB + AuthKit + Google
+ * flow as `www.kuklabs.com`, so email/password/OTP and the browser+deep-link
+ * Google flow all resolve here. (It is one host on the single shared server —
+ * NOT a separate backend, per the one-server/one-DB mandate.)
  */
-const AUTH_BASE = 'https://www.kuklabs.com';
+const AUTH_BASE = 'https://pdf.kuklabs.com';
 const TOKEN_KEY = 'kuklabs:session-token';
 const USER_KEY = 'kuklabs:user';
 
