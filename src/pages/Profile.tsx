@@ -64,22 +64,22 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
         <p>Unlimited scans, batch OCR and priority support — coming soon with your Kuklabs account.</p>
       </div>
 
-      <h2>Cloud sync</h2>
-      <div className="card sync-card">
-        <div className="sync-head">
-          <span className="sync-ico"><CloudUpload size={18} /></span>
-          <div className="tx">
-            <b>{user ? 'Back up & sync' : 'Sign in to sync'}</b>
-            <span>{user ? 'Your PDFs sync to your Kuklabs account across devices.' : 'One Kuklabs account keeps your PDFs on every device.'}</span>
+      {user && (
+        <>
+          <h2>Cloud sync</h2>
+          <div className="card sync-card">
+            <div className="sync-head">
+              <span className="sync-ico"><CloudUpload size={18} /></span>
+              <div className="tx">
+                <b>Back up &amp; sync</b>
+                <span>Your PDFs sync to your Kuklabs account across devices.</span>
+              </div>
+            </div>
+            <button className="wide" disabled={syncing} onClick={onSync}>{syncing ? 'Syncing…' : 'Sync now'}</button>
+            {syncMsg && <p className="viewer-status">{syncMsg}</p>}
           </div>
-        </div>
-        {user ? (
-          <button className="wide" disabled={syncing} onClick={onSync}>{syncing ? 'Syncing…' : 'Sync now'}</button>
-        ) : (
-          <button className="wide" onClick={onSignIn}>Sign in</button>
-        )}
-        {syncMsg && <p className="viewer-status">{syncMsg}</p>}
-      </div>
+        </>
+      )}
 
       <h2>Security</h2>
       <div className="card">

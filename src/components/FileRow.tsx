@@ -4,13 +4,6 @@ import type { DocItem } from '../types';
 import { formatBytes } from '../utils';
 import { sharePdf } from '../capacitor/share';
 
-/* Stable per-document gradient placeholder when no page-1 render is available. */
-function thumbClass(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h + id.charCodeAt(i)) % 3;
-  return ['t1', 't2', 't3'][h];
-}
-
 export default function FileRow({ d, onOpen, onDelete, onToggleFavorite, onToggleSecure }: {
   d: DocItem;
   onOpen: () => void;
@@ -38,9 +31,7 @@ export default function FileRow({ d, onOpen, onDelete, onToggleFavorite, onToggl
         {d.pages[0]?.dataUrl ? (
           <img className="file-thumb-img" src={d.pages[0].dataUrl} alt="" />
         ) : (
-          <div className={`file-thumb ${thumbClass(d.id)}`}>
-            <div className="lines"><i /><i /><i /></div>
-          </div>
+          <div className="file-thumb pdf"><span>PDF</span></div>
         )}
         <div>
           <b>{d.name}</b>
