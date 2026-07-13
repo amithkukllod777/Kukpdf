@@ -134,7 +134,7 @@ match.
 - [x] pdf-lib client-side PDF creation/editing (replaced jsPDF)
 - [x] Lucide icons
 - [x] Production signed AAB workflow (`build-android-release.yml`) — needs your keystore in GitHub Secrets before it can run, see `android-ci/README.md`
-- [ ] Android signing keystore in GitHub Secrets (you must generate + add this)
+- [~] Android signing keystore — an upload keystore has been generated and handed to the owner (with a copy-paste setup file) out-of-band; NOT in the repo. Remaining step is owner-only: paste the 4 values as GitHub Secrets (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`), then run the release workflow. Secrets are never committed.
 - [ ] Release versioning and changelog
 - [ ] Crash reporting and analytics
 
@@ -666,7 +666,7 @@ match.
 - [ ] `pdf.kuklabs.com` DNS connected and verified
 - [ ] Production backend environment
 - [ ] Dev/staging/production environments
-- [~] Signed Android AAB — workflow exists (`build-android-release.yml`); needs your keystore in GitHub Secrets to actually produce a signed build, see `android-ci/README.md`
+- [~] Signed Android AAB — workflow exists (`build-android-release.yml`); upload keystore generated + handed to owner; run once the 4 GitHub Secrets are pasted in (owner-only step), see `android-ci/README.md`
 - [ ] Play Console app setup (requires your Google Play Developer account)
 - [ ] Data Safety form
 - [ ] Privacy Policy URL (draft text exists in-app; needs hosting at a public URL, e.g. on kuklabs.com)
