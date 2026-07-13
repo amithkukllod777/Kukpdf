@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import { Eye, EyeOff, Lock, Mail, Smartphone, User } from 'lucide-react';
 import { productBrand } from '../brand';
 import {
@@ -72,8 +73,16 @@ export default function Login({ onDone, onClose }: { onDone: () => void; onClose
   });
 
   const google = () => run(async () => {
-    await Browser.open({ url: googleSignInUrl('/') });
-    setNotice('Finish signing in with Google in the browser, then return to the app.');
+    // On the web (pdf.kuklabs.com) the cookie-based Google flow works directly.
+    // In the native Android app it can't complete until the app's OAuth client +
+    // SHA fingerprint are registered in the shared Google Cloud project and the
+    // deep-link return is wired — so we're honest instead of opening a dead end.
+    if (Capacitor.isNativePlatform()) {
+      setError(null);
+      setNotice('Google sign-in for the app is still being set up. For now, sign in with your email and password — it’s the same Kuklabs account.');
+      return;
+    }
+    await Browser.open({ url: googleSignInUrl(window.location.pathname || '/') });
   });
 
   return (
