@@ -7,10 +7,13 @@ import {
   directLogin, directRegister, forgotPassword, googleSignInUrl,
   resendOtp, resetPassword, verifyLoginOtp, verifyOtp,
 } from '../kuklabs/authClient';
+import { authMessages, friendlyError } from '../auth/authMessages';
+import { isEmail, isPhone, isValidIdentity, toE164 } from '../auth/identityDetection';
 
 type Mode = 'login' | 'signup' | 'loginOtp' | 'signupOtp' | 'forgot' | 'reset';
 
-const emailOrPhone = (v: string) => /\S+@\S+\.\S+/.test(v) || /^\+?[1-9]\d{7,14}$/.test(v.replace(/[\s\-()]/g, ''));
+/** Standard Kuklabs password policy: 8+ chars with at least one letter and one number. */
+const isStrongPassword = (v: string) => v.length >= 8 && /[A-Za-z]/.test(v) && /\d/.test(v);
 
 /** Kuklabs Auth Screen — KUKLABS_IDENTITY.md §15. One account, three methods. */
 export default function Login({ onDone, onClose }: { onDone: () => void; onClose: () => void }) {
@@ -30,45 +33,63 @@ export default function Login({ onDone, onClose }: { onDone: () => void; onClose
 
   function reset(next: Mode) { setError(null); setNotice(null); setOtp(''); setMode(next); }
 
-  async function run(fn: () => Promise<void>) {
+  /** Validation errors are already friendly; only wrap thrown/server errors. */
+  async function run(fn: () => Promise<void>, invalidFallback: string = authMessages.genericFallback) {
     setError(null); setLoading(true);
-    try { await fn(); } catch (e: any) { setError(e?.message || 'Something went wrong.'); } finally { setLoading(false); }
+    try {
+      await fn();
+    } catch (e: any) {
+      // A ValidationMessage carries a ready friendly string; pass it through.
+      setError(e?.friendly ? e.message : friendlyError(e, invalidFallback));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /** Throws a pre-friendly validation error that run() surfaces verbatim. */
+  function fail(message: string): never {
+    const err = new Error(message) as Error & { friendly?: boolean };
+    err.friendly = true;
+    throw err;
   }
 
   const submitLogin = () => run(async () => {
-    if (!emailOrPhone(identity)) throw new Error('Enter a valid mobile number or email.');
-    if (password.length < 6) throw new Error('Enter your password.');
-    const { mfaRequired } = await directLogin(identity, password);
-    if (mfaRequired) { setEmail(identity); reset('loginOtp'); setNotice('We sent a 6-digit code to your email.'); }
+    if (!identity.trim()) fail(authMessages.emptyIdentity);
+    if (!isValidIdentity(identity)) fail(isEmail(identity) ? authMessages.invalidEmail : authMessages.invalidPhone);
+    if (!password) fail(authMessages.emptyPassword);
+    // Phone identities submit in E.164; email is passed through unchanged.
+    const submitId = isPhone(identity) ? toE164(identity) : identity.trim();
+    const { mfaRequired } = await directLogin(submitId, password);
+    if (mfaRequired) { setEmail(submitId); reset('loginOtp'); setNotice('We sent a 6-digit code to your email.'); }
     else onDone();
-  });
+  }, authMessages.genericSignInError);
 
   const submitSignup = () => run(async () => {
-    if (name.trim().length < 2) throw new Error('Enter your full name.');
-    if (!/\S+@\S+\.\S+/.test(email)) throw new Error('Enter a valid email.');
-    if (!/^\+?[1-9]\d{9,14}$/.test(phone.replace(/[\s\-()]/g, ''))) throw new Error('Enter a valid mobile number with country code.');
-    if (password.length < 6) throw new Error('Password must be at least 6 characters.');
-    await directRegister({ name: name.trim(), email, phone, password });
-    reset('signupOtp'); setNotice(`We sent a 6-digit code to ${email}.`);
+    if (name.trim().length < 2) fail(authMessages.emptyName);
+    if (!isEmail(email)) fail(authMessages.invalidEmail);
+    if (!isPhone(phone)) fail(authMessages.invalidPhone);
+    if (!isStrongPassword(password)) fail(authMessages.weakPassword);
+    await directRegister({ name: name.trim(), email: email.trim(), phone: toE164(phone), password });
+    reset('signupOtp'); setNotice(`We sent a 6-digit code to ${email.trim()}.`);
   });
 
   const submitOtp = () => run(async () => {
-    if (otp.length !== 6) throw new Error('Enter the 6-digit code.');
+    if (otp.length !== 6) fail(authMessages.otpInvalid);
     if (mode === 'signupOtp') await verifyOtp(email, otp);
     else await verifyLoginOtp(email, otp);
     onDone();
   });
 
   const submitForgot = () => run(async () => {
-    if (!/\S+@\S+\.\S+/.test(email)) throw new Error('Enter your account email.');
-    await forgotPassword(email);
-    reset('reset'); setNotice(`We sent a reset code to ${email}.`);
+    if (!isEmail(email)) fail(authMessages.invalidEmail);
+    await forgotPassword(email.trim());
+    reset('reset'); setNotice(`We sent a reset code to ${email.trim()}.`);
   });
 
   const submitReset = () => run(async () => {
-    if (otp.length !== 6) throw new Error('Enter the 6-digit code.');
-    if (password.length < 6) throw new Error('New password must be at least 6 characters.');
-    await resetPassword(email, otp, password);
+    if (otp.length !== 6) fail(authMessages.otpInvalid);
+    if (!isStrongPassword(password)) fail(authMessages.weakPassword);
+    await resetPassword(email.trim(), otp, password);
     reset('login'); setNotice('Password updated. Please sign in.');
   });
 
@@ -83,7 +104,7 @@ export default function Login({ onDone, onClose }: { onDone: () => void; onClose
     }
     // Web (pdf.kuklabs.com): cookie-based, same-tab redirect.
     window.location.href = googleSignInUrl(window.location.pathname || '/');
-  });
+  }, authMessages.genericSignInError);
 
   return (
     <div className="auth">
