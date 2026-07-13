@@ -18,7 +18,8 @@ import { pagesToPdf } from './pdf/export';
 import { listDocs, saveDoc, deleteDoc, listSignatures, saveSignature, deleteSignature } from './db';
 import { pickFromGallery } from './capacitor/camera';
 import { hasPin } from './capacitor/lock';
-import { getCurrentUser, signOut, type KuklabsUser } from './kuklabs/authClient';
+import { Browser } from '@capacitor/browser';
+import { exchangeGoogleCode, getCurrentUser, signOut, type KuklabsUser } from './kuklabs/authClient';
 
 const pathToTab: Record<string, Tab> = { '/': 'home', '/tools': 'tools', '/scan': 'scan', '/files': 'files', '/profile': 'profile' };
 const tabToPath: Record<Tab, string> = { home: '/', tools: '/tools', scan: '/scan', files: '/files', profile: '/profile' };
@@ -74,6 +75,24 @@ export default function App() {
   useEffect(() => {
     const sub = CapApp.addListener('appStateChange', ({ isActive }) => {
       if (!isActive) hasPin().then((on) => { if (on) setLocked(true); });
+    });
+    return () => { sub.then((s) => s.remove()); };
+  }, []);
+
+  // Google sign-in deep-link return (kukpdf://auth?code=…) — KUKLABS_IDENTITY.md §3.1.
+  useEffect(() => {
+    const sub = CapApp.addListener('appUrlOpen', async ({ url }) => {
+      if (!url?.startsWith('kukpdf://auth')) return;
+      Browser.close().catch(() => {});
+      try {
+        const code = new URL(url).searchParams.get('code');
+        if (!code) return;
+        await exchangeGoogleCode(code);
+        setUser(await getCurrentUser());
+        setShowLogin(false);
+      } catch (e) {
+        console.error('Google sign-in exchange failed', e);
+      }
     });
     return () => { sub.then((s) => s.remove()); };
   }, []);

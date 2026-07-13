@@ -87,14 +87,33 @@ export async function resetPassword(email: string, otp: string, newPassword: str
   await callAuth('resetPassword', { email, otp, newPassword });
 }
 
+/** Custom URL scheme the OAuth callback deep-links back to (must match the
+ *  backend's APP_SCHEMES["kukpdf"] and the AndroidManifest intent-filter). */
+export const GOOGLE_DEEPLINK_SCHEME = 'kukpdf';
+
 /**
  * "Continue with Google" — opens the shared Kuklabs Google OAuth start URL in the
- * system browser (webview Google login is blocked by Google). On native the app
- * returns via a `com.kuklabs.pdf://` deep link once the Android OAuth client +
- * SHA fingerprints are registered in the shared Google Cloud project (owner infra).
+ * system browser (webview Google login is blocked by Google). Passing `app=kukpdf`
+ * marks the native flow: the backend callback hands a one-time code back via the
+ * `kukpdf://auth` deep link, which the app trades for a bearer token (exchangeGoogleCode).
  */
 export function googleSignInUrl(returnTo = '/'): string {
-  return `${AUTH_BASE}/api/auth/google/start?returnTo=${encodeURIComponent(returnTo)}`;
+  const p = new URLSearchParams({ app: GOOGLE_DEEPLINK_SCHEME, returnTo });
+  return `${AUTH_BASE}/api/auth/google/start?${p.toString()}`;
+}
+
+/** Trades the one-time deep-link code for a bearer session token (native step 3). */
+export async function exchangeGoogleCode(code: string): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch(`${AUTH_BASE}/api/auth/google/app-exchange?code=${encodeURIComponent(code)}`);
+  } catch {
+    throw new Error("Can't reach the Kuklabs account service. Check your connection and try again.");
+  }
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body?.token) throw new Error(body?.error || 'Google sign-in link expired — please try again.');
+  await Preferences.set({ key: TOKEN_KEY, value: body.token });
+  await Preferences.set({ key: USER_KEY, value: JSON.stringify({ id: body.id ?? body.email, name: body.name, email: body.email }) });
 }
 
 export async function getToken(): Promise<string | null> {

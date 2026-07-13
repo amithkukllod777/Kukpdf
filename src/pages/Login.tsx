@@ -73,16 +73,16 @@ export default function Login({ onDone, onClose }: { onDone: () => void; onClose
   });
 
   const google = () => run(async () => {
-    // On the web (pdf.kuklabs.com) the cookie-based Google flow works directly.
-    // In the native Android app it can't complete until the app's OAuth client +
-    // SHA fingerprint are registered in the shared Google Cloud project and the
-    // deep-link return is wired — so we're honest instead of opening a dead end.
+    // System-browser + deep-link flow (KUKLABS_IDENTITY.md §3.1). The browser
+    // completes Google auth; the backend hands a one-time code back to the app
+    // via the kukpdf://auth deep link, caught by the appUrlOpen listener in App.tsx.
     if (Capacitor.isNativePlatform()) {
-      setError(null);
-      setNotice('Google sign-in for the app is still being set up. For now, sign in with your email and password — it’s the same Kuklabs account.');
+      await Browser.open({ url: googleSignInUrl('/') });
+      setNotice('Continue in the browser — you’ll come back to the app automatically.');
       return;
     }
-    await Browser.open({ url: googleSignInUrl(window.location.pathname || '/') });
+    // Web (pdf.kuklabs.com): cookie-based, same-tab redirect.
+    window.location.href = googleSignInUrl(window.location.pathname || '/');
   });
 
   return (

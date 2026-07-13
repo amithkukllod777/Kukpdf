@@ -37,6 +37,9 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
+      - name: Register Google sign-in deep link (kukpdf://auth)
+        run: node android-ci/patch-manifest.mjs
+
       - name: Apply KukPDF app icon
         run: |
           for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
