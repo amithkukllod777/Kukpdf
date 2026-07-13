@@ -1,0 +1,79 @@
+name: Build Signed Android AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-aab:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Register Google sign-in deep link
+        run: node android-ci/patch-manifest.mjs
+
+      - name: Apply KukPDF app icon
+        run: |
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            cp "android-icons/mipmap-$d/ic_launcher.png" "android/app/src/main/res/mipmap-$d/ic_launcher.png"
+            cp "android-icons/mipmap-$d/ic_launcher_round.png" "android/app/src/main/res/mipmap-$d/ic_launcher_round.png"
+            cp "android-icons/mipmap-$d/ic_launcher_foreground.png" "android/app/src/main/res/mipmap-$d/ic_launcher_foreground.png"
+          done
+          cp android-icons/ic_launcher_background.xml android/app/src/main/res/values/ic_launcher_background.xml
+
+      - name: Restore upload keystore
+        env:
+          KUKPDF_KEYSTORE_BASE64: ${{ secrets.KUKPDF_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KUKPDF_KEYSTORE_BASE64" || (echo "Missing KUKPDF_KEYSTORE_BASE64 secret" && exit 1)
+          echo "$KUKPDF_KEYSTORE_BASE64" | base64 --decode > android/app/kukpdf-upload.jks
+
+      - name: Configure release signing
+        env:
+          KUKPDF_STORE_PASSWORD: ${{ secrets.KUKPDF_STORE_PASSWORD }}
+          KUKPDF_KEY_ALIAS: ${{ secrets.KUKPDF_KEY_ALIAS }}
+          KUKPDF_KEY_PASSWORD: ${{ secrets.KUKPDF_KEY_PASSWORD }}
+        run: node android-ci/patch-signing.mjs
+
+      - name: Build signed release AAB
+        env:
+          KUKPDF_STORE_PASSWORD: ${{ secrets.KUKPDF_STORE_PASSWORD }}
+          KUKPDF_KEY_ALIAS: ${{ secrets.KUKPDF_KEY_ALIAS }}
+          KUKPDF_KEY_PASSWORD: ${{ secrets.KUKPDF_KEY_PASSWORD }}
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew bundleRelease
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KukPDF-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
