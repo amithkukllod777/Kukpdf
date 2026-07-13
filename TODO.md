@@ -45,6 +45,19 @@ session system or Google client** — exactly per the mandate. Restructured
 Profile to §16 (identity card, Security, About with `Version X.Y.Z (Build N)`,
 Sign out, Powered by Kuklabs). Central brand config in `src/brand.ts` (§4).
 
+A follow-up pass aligned the login to the owner's **Auth Pack V3**
+(`KUKLABS_UI_AUTH_AGENT_PACK_V3` — exact design tokens + `APPROVED_LOGIN_REFERENCE`):
+`src/auth/authMessages.ts` (friendly copy — raw server/JSON errors never surface;
+wrong email/phone/password shows one safe generic message; offline / OTP-expired /
+OTP-invalid mapped) and `src/auth/identityDetection.ts` (smart email-vs-mobile
+detection; phone submits in **E.164** on login, signup and reset). Standard
+8-char (letter+number) password policy on signup/reset. Exact token sizes
+(icon 80/r24, controls h58/r16, tabs h56, Inter scale) verified against the
+approved reference in Playwright — Login and Sign Up both match. **No version on
+the login screen** (version lives only in Profile → About). Not built: the
+compact country-selector chip (not in the approved reference; India +91 default,
+honest note in code) — E.164 submission works regardless.
+
 **Google sign-in — now wired end-to-end (browser + deep-link, §3.1):** the owner
 registered `com.kuklabs.pdf` + the release-keystore SHA-1/SHA-256 in the shared
 Firebase/Google Cloud project (needed for FCM/Phone-Auth/google-services.json).
