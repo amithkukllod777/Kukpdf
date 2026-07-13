@@ -58,6 +58,18 @@ the login screen** (version lives only in Profile → About). Not built: the
 compact country-selector chip (not in the approved reference; India +91 default,
 honest note in code) — E.164 submission works regardless.
 
+**Cloud sync (documents ↔ Kuklabs account):** two-way sync so the same account
+sees its PDFs on every device. App side: `src/kuklabs/syncClient.ts` (REST over
+`pdf.kuklabs.com/api/kukpdf`, Bearer token) + `src/sync.ts` engine (push local-only
+uploads, pull remote-only downloads, propagate deletes via local tombstones +
+server soft-delete; LWW by server `updatedAt`; content is immutable so sync is
+existence-based). Auto-syncs on login, app mount and foreground resume; manual
+"Sync now" in Profile → Cloud sync. Backend (kukbook-erp, **PR #918**): userId-scoped
+`kukpdf_documents` table + `/api/kukpdf` REST (list/upload/download/soft-delete),
+PDF bytes to S3 via `storagePut`, auth via `sdk.authenticateRequest`. **Goes live
+after: (1) PR #918 merged + deployed, (2) `node kukpdf_documents_migrate.cjs` run
+once on the AWS DB.** Until then the app shows honest sync errors, never fakes it.
+
 **Scanner-first launch:** on a native cold open, KukPDF goes straight to the
 Scan tab and auto-launches a fresh capture (real ML Kit scanner when ready,
 plain camera otherwise). Fires exactly once per launch (consumed immediately —

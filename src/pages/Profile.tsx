@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BadgeCheck, ChevronRight, LogIn, Shield, Sparkles, Trash2 } from 'lucide-react';
+import { BadgeCheck, ChevronRight, CloudUpload, LogIn, Shield, Sparkles, Trash2 } from 'lucide-react';
 import type { DocItem, SignatureItem, Tab } from '../types';
 import Header from '../components/Header';
 import { hasPin, setPin, clearPin, verifyPin } from '../capacitor/lock';
@@ -13,7 +13,7 @@ function initials(user: KuklabsUser): string {
 }
 
 /** Profile — KUKLABS_IDENTITY.md §16: Kuklabs Account · Security · About. */
-export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOut, onDeleteSignature, onUnlockSecure, setTab, onOpenLegal }: {
+export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOut, onDeleteSignature, onUnlockSecure, setTab, onOpenLegal, onSync, syncing, syncMsg }: {
   docs: DocItem[];
   signatures: SignatureItem[];
   user: KuklabsUser | null;
@@ -23,6 +23,9 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
   onUnlockSecure: () => void;
   setTab: (t: Tab) => void;
   onOpenLegal: (doc: 'privacy' | 'terms') => void;
+  onSync: () => void;
+  syncing: boolean;
+  syncMsg: string | null;
 }) {
   const [pinEnabled, setPinEnabled] = useState(false);
   const [pinInput, setPinInput] = useState('');
@@ -58,7 +61,24 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
 
       <div className="card pro">
         <Sparkles /><b> KukPDF Pro</b>
-        <p>Unlimited scans, batch OCR and cloud sync — coming soon with your Kuklabs account.</p>
+        <p>Unlimited scans, batch OCR and priority support — coming soon with your Kuklabs account.</p>
+      </div>
+
+      <h2>Cloud sync</h2>
+      <div className="card sync-card">
+        <div className="sync-head">
+          <span className="sync-ico"><CloudUpload size={18} /></span>
+          <div className="tx">
+            <b>{user ? 'Back up & sync' : 'Sign in to sync'}</b>
+            <span>{user ? 'Your PDFs sync to your Kuklabs account across devices.' : 'One Kuklabs account keeps your PDFs on every device.'}</span>
+          </div>
+        </div>
+        {user ? (
+          <button className="wide" disabled={syncing} onClick={onSync}>{syncing ? 'Syncing…' : 'Sync now'}</button>
+        ) : (
+          <button className="wide" onClick={onSignIn}>Sign in</button>
+        )}
+        {syncMsg && <p className="viewer-status">{syncMsg}</p>}
       </div>
 
       <h2>Security</h2>

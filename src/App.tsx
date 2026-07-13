@@ -15,7 +15,8 @@ import LockScreen from './pages/LockScreen';
 import Login from './pages/Login';
 import { dateStamp, fileToDataUrl } from './utils';
 import { pagesToPdf } from './pdf/export';
-import { listDocs, saveDoc, deleteDoc, listSignatures, saveSignature, deleteSignature } from './db';
+import { listDocs, saveDoc, deleteDoc, addTombstone, listSignatures, saveSignature, deleteSignature } from './db';
+import { syncNow } from './sync';
 import { pickFromGallery } from './capacitor/camera';
 import { hasPin } from './capacitor/lock';
 import { Browser } from '@capacitor/browser';
@@ -59,7 +60,29 @@ export default function App() {
   // Fires the scanner once on a native cold launch (consumed after first run so
   // it never re-triggers on tab switches or resumes).
   const [autoScan, setAutoScan] = useState(Capacitor.isNativePlatform());
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  /** Two-way cloud sync with the shared Kuklabs account. Silent for the auto
+   * runs (login/resume); surfaces a short status line when triggered manually. */
+  async function runSync(manual = false) {
+    if (syncing) return;
+    setSyncing(true);
+    if (manual) setSyncMsg('Syncing…');
+    try {
+      const r = await syncNow();
+      if (!r.skipped) setDocs(await listDocs());
+      if (manual) {
+        setSyncMsg(r.skipped ? 'Sign in to sync your documents.'
+          : `Synced · ${r.uploaded} up · ${r.downloaded} down`);
+      }
+    } catch (e: any) {
+      if (manual) setSyncMsg(e?.message || 'Sync failed. Try again.');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   useEffect(() => {
     const onPop = () => setTabState(initialTab());
@@ -71,8 +94,16 @@ export default function App() {
     listDocs().then(setDocs);
     listSignatures().then(setSignatures);
     hasPin().then((on) => setLocked(on));
-    getCurrentUser().then(setUser);
+    getCurrentUser().then((u) => { setUser(u); if (u) runSync(); });
   }, []);
+
+  // Re-sync when the app returns to the foreground (if signed in).
+  useEffect(() => {
+    const sub = CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive && user) runSync();
+    });
+    return () => { sub.then((s) => s.remove()); };
+  }, [user]);
 
   async function handleSignOut() {
     await signOut();
@@ -97,6 +128,7 @@ export default function App() {
         await exchangeGoogleCode(code);
         setUser(await getCurrentUser());
         setShowLogin(false);
+        runSync();
       } catch (e) {
         console.error('Google sign-in exchange failed', e);
       }
@@ -176,7 +208,9 @@ export default function App() {
 
   async function handleDeleteDoc(id: string) {
     await deleteDoc(id);
+    await addTombstone(id); // propagate the delete to the account's other devices
     setDocs((d) => d.filter((x) => x.id !== id));
+    if (user) runSync();
   }
 
   async function handleToggleFavorite(id: string) {
@@ -265,6 +299,9 @@ export default function App() {
             onUnlockSecure={() => setUnlockedSecure(true)}
             setTab={setTab}
             onOpenLegal={setLegalDoc}
+            onSync={() => runSync(true)}
+            syncing={syncing}
+            syncMsg={syncMsg}
           />
         )}
       </main>
@@ -305,7 +342,7 @@ export default function App() {
       {showLogin && (
         <Login
           onClose={() => setShowLogin(false)}
-          onDone={async () => { setUser(await getCurrentUser()); setShowLogin(false); }}
+          onDone={async () => { setUser(await getCurrentUser()); setShowLogin(false); runSync(); }}
         />
       )}
     </div>

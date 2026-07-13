@@ -17,7 +17,7 @@ import { Preferences } from '@capacitor/preferences';
  * Google flow all resolve here. (It is one host on the single shared server —
  * NOT a separate backend, per the one-server/one-DB mandate.)
  */
-const AUTH_BASE = 'https://pdf.kuklabs.com';
+export const AUTH_BASE = 'https://pdf.kuklabs.com';
 const TOKEN_KEY = 'kuklabs:session-token';
 const USER_KEY = 'kuklabs:user';
 

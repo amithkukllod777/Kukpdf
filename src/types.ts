@@ -34,6 +34,10 @@ export interface DocItem {
   size: number;
   blob: Blob;
   ocrText?: string;
+  /** Cloud sync bookkeeping (KUKLABS one-account sync). `syncedAt` is set once a
+   * doc has been mirrored to / from the shared backend so we don't re-upload it. */
+  updatedAt?: number;
+  syncedAt?: number;
 }
 
 export interface SignatureItem {

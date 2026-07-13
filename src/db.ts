@@ -3,6 +3,7 @@ import type { DocItem, SignatureItem } from './types';
 
 const DOC_PREFIX = 'kukpdf:doc:';
 const SIG_PREFIX = 'kukpdf:sig:';
+const TOMB_PREFIX = 'kukpdf:tomb:';
 
 export async function listDocs(): Promise<DocItem[]> {
   const all = await keys();
@@ -19,6 +20,23 @@ export async function saveDoc(doc: DocItem): Promise<void> {
 
 export async function deleteDoc(id: string): Promise<void> {
   await del(DOC_PREFIX + id);
+}
+
+/** Record a deletion so cloud sync can propagate it to the user's other devices.
+ * Cleared by the sync engine once the remote delete has been acknowledged. */
+export async function addTombstone(id: string): Promise<void> {
+  await set(TOMB_PREFIX + id, Date.now());
+}
+
+export async function listTombstones(): Promise<string[]> {
+  const all = await keys();
+  return all
+    .filter((k): k is string => typeof k === 'string' && k.startsWith(TOMB_PREFIX))
+    .map((k) => k.slice(TOMB_PREFIX.length));
+}
+
+export async function removeTombstone(id: string): Promise<void> {
+  await del(TOMB_PREFIX + id);
 }
 
 export async function listSignatures(): Promise<SignatureItem[]> {
