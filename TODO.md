@@ -74,9 +74,14 @@ The mandated login flow itself is browser+deep-link: KukPDF now passes
 one-time code for a bearer token via `/api/auth/google/app-exchange`. CI injects
 the `kukpdf://auth` intent-filter into AndroidManifest (`android-ci/patch-manifest.mjs`).
 Paired backend change: `kukpdf` added to `APP_SCHEMES` in kukbook-erp
-(`server/googleAuth.ts`, on branch `claude/dekho-pdf-android-repo-9ai9x9`).
-**To go live it needs: (1) that kukbook-erp branch merged + deployed to prod,
-(2) a real-device test** — not yet verified end-to-end.
+(`server/googleAuth.ts`) — merged to `main` via **PR #914** (`cb95aea9`) and
+**deployed to production** (AWS auto-deploy). Verified live: production
+`/api/auth/google/start?app=kukpdf` now stamps `state.app="kukpdf"` on both
+`pdf.kuklabs.com` and `www.kuklabs.com`. **✅ Google sign-in tested working
+end-to-end on a real device** (owner confirmed 2026-07-13). App `AUTH_BASE` is
+`https://pdf.kuklabs.com` (KukPDF's subdomain on the single shared server;
+registered as a Google OAuth JS origin + callback). Firebase has
+`com.kuklabs.pdf` + release-keystore SHA-1/SHA-256 registered.
 
 **Still blocked on owner infra (not code):** a `pdf.kuklabs.com` subdomain
 enables shared-cookie SSO on web. The
