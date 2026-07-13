@@ -31,6 +31,9 @@
   --a500:#3B82F6; --a600:#2563EB; --a700:#1D4ED8; --a800:#1E40AF; --a900:#1E3A8A;
   --p:var(--a600); --p-press:var(--a700); --p-surface:var(--a50);
 
+  /* "PDF" brand red — sampled from the logo's PDF badge (#C60000). */
+  --pdf-red:#C60000;
+
   /* Radius §7.3 */
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px; --pill:999px;
   --card:var(--surface); /* legacy alias */
@@ -79,14 +82,14 @@ main{max-width:820px;margin:auto;padding:calc(28px + env(safe-area-inset-top)) 1
 .home-top{display:flex;align-items:center;justify-content:space-between;margin:2px 0 16px}
 .home-word{font-size:28px;line-height:1;font-weight:800;letter-spacing:-.03em;margin:0}
 .home-word .k{color:#1B2E8F}
-.home-word .p{color:#E11D1C}
+.home-word .p{color:var(--pdf-red)}
 .home-crown{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#FEF3C7;color:#F59E0B}
 .qt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .qt-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px 10px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 2px var(--overlay)}
 .qt-card:active{transform:scale(.98)}
 .qt-ico{width:54px;height:54px;border-radius:15px;display:grid;place-items:center;flex:none}
 .qt-card b{font-size:14px;font-weight:600;color:var(--ink)}
-.pdf-red{color:#E11D1C}
+.pdf-red{color:var(--pdf-red)}
 .home-h2{text-transform:none;letter-spacing:-.01em;color:var(--ink);font-weight:700;font-size:17px}
 .sync-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
 .sync-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--p-surface);color:var(--p);flex:none}
@@ -124,7 +127,7 @@ main{max-width:820px;margin:auto;padding:calc(28px + env(safe-area-inset-top)) 1
 .file-thumb-img{width:36px;height:46px;border-radius:var(--r-sm);object-fit:cover;flex:none;background:var(--surface);border:1px solid var(--line)}
 .file-thumb{width:36px;height:46px;border-radius:var(--r-sm);flex:none;position:relative}
 /* Red PDF badge — matches a real PDF file icon. */
-.file-thumb.pdf{display:grid;place-items:center;background:#DC2626;border:1px solid #DC2626;box-shadow:0 1px 2px rgba(220,38,38,.25)}
+.file-thumb.pdf{display:grid;place-items:center;background:var(--pdf-red);border:1px solid var(--pdf-red);box-shadow:0 1px 2px rgba(198,0,0,.25)}
 .file-thumb.pdf span{color:#fff;font-size:9px;font-weight:800;letter-spacing:.03em;line-height:1}
 
 /* Buttons §13.3 */
