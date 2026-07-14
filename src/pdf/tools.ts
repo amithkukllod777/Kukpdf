@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 import { PDFDocument as PDFDocumentEncrypt } from 'pdf-lib-plus-encrypt';
-import { renderPageToDataUrl, loadPdfDoc, destroyPdfDoc } from './render';
+import { renderPageToDataUrl, loadPdfDoc, loadPdfDocWithPassword, destroyPdfDoc } from './render';
 import { ocrImageWithWords, type OcrLang } from '../ocr';
 
 export async function fileOrBlobToBytes(input: Blob): Promise<Uint8Array> {
@@ -173,6 +173,46 @@ export async function protectPdf(bytes: Uint8Array, password: string): Promise<U
     permissions: { printing: 'highResolution', modifying: false, copying: false, annotating: true, fillingForms: true, contentAccessibility: true, documentAssembly: false },
   });
   return doc.save();
+}
+
+/**
+ * Unlock (remove password from) an encrypted PDF, client-side. pdfjs can DECRYPT
+ * an encrypted PDF when given the correct password (plain pdf-lib cannot open one
+ * at all). We open it with the password, render every page, and rebuild a NEW,
+ * unencrypted PDF from those page images. Honest tradeoff: the output is
+ * rasterised, so selectable text becomes non-selectable — but the file genuinely
+ * opens without a password afterwards. Wrong/missing password throws a friendly
+ * error (from the pdfjs PasswordException).
+ */
+export async function unlockPdf(
+  bytes: Uint8Array,
+  password: string,
+  onProgress?: (page: number, total: number, pct: number) => void,
+): Promise<Uint8Array> {
+  let doc;
+  try {
+    doc = await loadPdfDocWithPassword(bytes, password);
+  } catch (e: any) {
+    if (e?.name === 'PasswordException') {
+      throw new Error('That password is incorrect. Check it and try again.');
+    }
+    throw new Error('Could not open this PDF. It may be corrupted or use unsupported encryption.');
+  }
+  try {
+    const out = await PDFDocument.create();
+    const total = doc.numPages;
+    for (let i = 1; i <= total; i++) {
+      onProgress?.(i, total, Math.round(((i - 1) / total) * 100));
+      const dataUrl = await renderPageToDataUrl(doc, i, 2.0, 0.92); // high-res JPEG
+      const jpg = await out.embedJpg(dataUrlToBytes(dataUrl));
+      const page = out.addPage([jpg.width, jpg.height]);
+      page.drawImage(jpg, { x: 0, y: 0, width: jpg.width, height: jpg.height });
+    }
+    onProgress?.(total, total, 100);
+    return await out.save();
+  } finally {
+    await destroyPdfDoc(doc);
+  }
 }
 
 export function bytesToBlob(bytes: Uint8Array): Blob {

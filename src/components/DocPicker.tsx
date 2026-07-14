@@ -3,20 +3,22 @@ import { FileText, Upload } from 'lucide-react';
 import type { DocItem } from '../types';
 import { formatBytes } from '../utils';
 
-export default function DocPicker({ docs, multiple, onPick, onCancel, title, onImportPdf }: {
+export default function DocPicker({ docs, multiple, onPick, onCancel, title, onImportPdf, includeProtected }: {
   docs: DocItem[];
   multiple?: boolean;
   onPick: (chosen: DocItem[]) => void;
   onCancel: () => void;
   title: string;
   onImportPdf?: (file: File) => Promise<DocItem>;
+  /** Unlock PDF needs the encrypted docs shown (they're the whole point). */
+  includeProtected?: boolean;
 }) {
   const [ids, setIds] = useState<string[]>([]);
   const [importing, setImporting] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
   const selectable = docs.filter((d) => !d.trashed);
-  const pdfDocs = selectable.filter((d) => !d.passwordProtected);
-  const hiddenProtectedCount = selectable.length - pdfDocs.length;
+  const pdfDocs = includeProtected ? selectable : selectable.filter((d) => !d.passwordProtected);
+  const hiddenProtectedCount = includeProtected ? 0 : selectable.length - pdfDocs.length;
 
   async function handleImport(file: File | undefined) {
     if (!file || !onImportPdf) return;

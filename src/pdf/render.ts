@@ -19,6 +19,17 @@ export async function loadPdfDoc(bytes: Uint8Array | ArrayBuffer): Promise<pdfjs
   return doc;
 }
 
+/** Like loadPdfDoc but supplies a password so pdfjs can open an encrypted PDF.
+ *  Throws a pdfjs PasswordException (name === 'PasswordException') when the
+ *  password is missing or wrong — callers surface a friendly message. */
+export async function loadPdfDocWithPassword(bytes: Uint8Array | ArrayBuffer, password: string): Promise<pdfjsLib.PDFDocumentProxy> {
+  const data = bytes instanceof Uint8Array ? bytes.slice() : bytes.slice(0);
+  const task = pdfjsLib.getDocument({ data, password });
+  const doc = await task.promise;
+  (doc as any).__loadingTask = task;
+  return doc;
+}
+
 export async function destroyPdfDoc(doc: pdfjsLib.PDFDocumentProxy): Promise<void> {
   await (doc as any).__loadingTask?.destroy();
 }

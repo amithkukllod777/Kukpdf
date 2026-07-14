@@ -24,7 +24,7 @@ Legend — Implementation: ✅ Working · ⚠️ Partial · 🚧 Not built (hone
 | OCR/AI | Searchable PDF (invisible OCR layer) | ✅ | SMOKE | Med |
 | OCR/AI | Summarize PDF / Ask PDF | 🚧 not built (needs LLM backend) | SMOKE (message) | Low |
 | Security | Password Protect (real AES-128, pdf-lib-plus-encrypt) | ✅ | SMOKE | Med |
-| Security | Unlock PDF (decrypt) | 🚧 not built (needs qpdf server) | SMOKE (message) | Low |
+| Security | Unlock PDF (remove password) | ✅ client-side (pdfjs decrypt + rebuild; pages rasterized) | FUNCTIONAL (protect→unlock→opens-free verified) | Med |
 | Security | App PIN lock + re-lock on background | ✅ | NONE | Med |
 | Security | Secure Folder (PIN-gated view) | ⚠️ UI-gating only, **not** encryption | NONE | Med |
 | Files | List / search / filter (All/Scanned/PDFs/Favorites) | ✅ | SMOKE | Low |

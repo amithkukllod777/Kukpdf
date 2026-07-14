@@ -17,6 +17,7 @@ import {
   splitAllPages,
   stampImage,
   buildSearchablePdf,
+  unlockPdf,
 } from '../pdf/tools';
 import { imagesToPdf } from '../pdf/export';
 import { ocrImage, type OcrLang } from '../ocr';
@@ -28,7 +29,6 @@ const UNSUPPORTED: Record<string, string> = {
   Annotate: 'Freehand annotation editing needs a full PDF-editing engine — not built yet.',
   'Summarize PDF': 'AI summaries need a backend LLM service — this app is currently backend-free (client-only). Not built yet.',
   'Ask PDF': 'Document chat needs a backend LLM + vector search service. Not built yet.',
-  'Unlock PDF': 'No reliable client-side library can decrypt an already-encrypted PDF (the encryption libraries checked only add passwords, they don\'t remove them). Not built yet — would need a server-side tool like qpdf.',
 };
 
 const NEEDS_MULTI = new Set(['Merge PDF']);
@@ -80,6 +80,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
         title={`Choose a document for ${tool}`}
         docs={docs}
         multiple={NEEDS_MULTI.has(tool)}
+        includeProtected={tool === 'Unlock PDF'}
         onCancel={onCancel}
         onImportPdf={onImportPdf}
         onPick={async (picked) => {
@@ -88,7 +89,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
             setStage('params');
             return;
           }
-          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect'].includes(tool)) {
+          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect', 'Unlock PDF'].includes(tool)) {
             setStage('params');
             return;
           }
@@ -258,6 +259,44 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
                 }
               }}
             >Protect</button>
+          </div>
+        </div></div>
+      );
+    }
+    if (tool === 'Unlock PDF') {
+      return (
+        <div className="modal"><div className="sheet">
+          <h2>Unlock PDF</h2>
+          <p className="viewer-status">Enter the password for “{chosen[0]?.name}”. The unlocked copy opens without a password. Note: pages are rebuilt as images, so selectable text becomes non-selectable.</p>
+          <input
+            type="password"
+            value={pdfPassword}
+            onChange={(e) => setPdfPassword(e.target.value)}
+            placeholder="Enter the PDF password"
+            autoFocus
+          />
+          {error && <p className="viewer-status error">{error}</p>}
+          <div className="actions">
+            <button onClick={onCancel}>Cancel</button>
+            <button
+              disabled={!pdfPassword}
+              onClick={async () => {
+                setStage('running');
+                setProgressText('Unlocking…');
+                setProgressPct(0);
+                try {
+                  const bytes = await fileOrBlobToBytes(chosen[0].blob);
+                  const out = await unlockPdf(bytes, pdfPassword, (p, t, pct) => { setProgressText(`Page ${p}/${t}`); setProgressPct(pct); });
+                  setProgressPct(null);
+                  setResultNote('Password removed — this copy opens without a password.');
+                  await saveOutput(out, `${stripExt(chosen[0].name)} (unlocked).pdf`);
+                } catch (e: any) {
+                  setProgressPct(null);
+                  setError(e?.message || 'Could not unlock this PDF');
+                  setStage('params');
+                }
+              }}
+            >Unlock</button>
           </div>
         </div></div>
       );
