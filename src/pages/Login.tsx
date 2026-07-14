@@ -108,6 +108,17 @@ export default function Login({ onDone, onClose }: { onDone: () => void; onClose
 
   return (
     <div className="auth">
+      {/* Decorative zone (§8.3) — visual only, never defines layout height; a
+          KukPDF-themed take on the approved reference's floating cards. Hidden on
+          short screens / when the keyboard is open so it never crowds the form. */}
+      <div className="auth-bg" aria-hidden="true">
+        <span className="auth-card c1" />
+        <span className="auth-card c2" />
+        <span className="auth-card c3" />
+        <span className="auth-card c4" />
+        <span className="auth-card c5" />
+        <span className="auth-card c6" />
+      </div>
       <button className="auth-close" onClick={onClose} aria-label="Close">✕</button>
       <div className="auth-inner">
         <img className="auth-icon" src={productBrand.icon} alt={productBrand.productName} />
