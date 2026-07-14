@@ -29,9 +29,9 @@ const exe = process.env.CHROMIUM || undefined; // undefined → playwright's bun
 
 const TOOLS = [
   'Scan to PDF', 'Image to PDF', 'JPG to PDF', 'Merge PDF', 'Split PDF', 'Rotate PDF',
-  'Delete Pages', 'Reorder Pages', 'Compress PDF', 'Repair PDF', 'Sign PDF', 'Watermark',
-  'Page Numbers', 'Annotate', 'Image to Text', 'Searchable PDF', 'Summarize PDF', 'Ask PDF',
-  'Password Protect', 'Unlock PDF', 'Secure Folder',
+  'Delete Pages', 'Reorder Pages', 'Compress PDF', 'Repair PDF', 'PDF to Word', 'PDF to Excel',
+  'Sign PDF', 'Watermark', 'Page Numbers', 'Annotate', 'Image to Text', 'Searchable PDF',
+  'Summarize PDF', 'Ask PDF', 'Password Protect', 'Unlock PDF', 'Secure Folder',
 ];
 
 const results = [];

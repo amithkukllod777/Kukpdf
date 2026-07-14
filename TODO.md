@@ -768,3 +768,10 @@ Do not blindly merge repositories. Audit every dependency before reuse.
 ## Definition of production-ready V1
 
 KukPDF V1 is not complete until users can reliably: scan with native camera, auto-detect/crop pages, enhance scans, create and organize multi-page PDFs, run English/Hindi OCR, search documents, sign/watermark/compress PDFs, save files offline, protect private documents, and install a signed Play Store build with privacy and crash monitoring.
+
+## Batch: PDF→Office (Pro) + Play compliance (2026-07-14)
+- [x] PDF → Word / Excel export: runs LibreOffice on the shared backend, so it is a **server-API tool → Pro-gated + daily-limited** (free 0, Premium 30/day, Business 60/day; server-enforced via the generic `kukpdf_api_usage` reserve/release meter). App sends the PDF with the bearer token, downloads/shares the result, and shows an Upgrade CTA on 402. On-device tools stay free & unlimited. Rule: **any tool that uses a server API is not free.** Backend in kukbook-erp PR #958 (migration `kukpdf_api_usage_migrate.cjs`).
+- [x] Play/GDPR "Delete my data": Profile → wipes all local docs/signatures + erases KukPDF cloud docs (backend `DELETE /api/kukpdf/docs`), keeps the account; plus a link to full Kuklabs account deletion.
+- [x] Support / contact link in Profile (mailto:support@kuklabs.com).
+- [x] `allowBackup=false` + `data_extraction_rules.xml` (cloud + device-transfer excluded) so the session token/docs stay off Google backups & adb.
+- [ ] Still pending for public Production: hosted Privacy URL, Data-safety form, crash reporting (needs DSN), secure token-at-rest, device round-trip of Google login + cloud sync. Larger competitive items: Hindi app UI (i18n), more Indian OCR scripts.

@@ -6,6 +6,7 @@ import PageManager from './PageManager';
 import SignaturePad from './SignaturePad';
 import AnnotateEditor from './AnnotateEditor';
 import AiToolPanel from './AiToolPanel';
+import OfficeExportPanel from './OfficeExportPanel';
 import {
   addPageNumbers,
   addWatermarkText,
@@ -34,6 +35,13 @@ const UNSUPPORTED: Record<string, string> = {};
 const AI_TOOLS: Record<string, 'summarize' | 'ask'> = {
   'Summarize PDF': 'summarize',
   'Ask PDF': 'ask',
+};
+
+// Server-API export tools (Pro-gated + daily-limited, like AI). Pick a PDF, then
+// open the export panel instead of running a local pipeline.
+const OFFICE_TOOLS: Record<string, 'docx' | 'xlsx'> = {
+  'PDF to Word': 'docx',
+  'PDF to Excel': 'xlsx',
 };
 
 const NEEDS_MULTI = new Set(['Merge PDF']);
@@ -94,7 +102,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
             setStage('params');
             return;
           }
-          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect', 'Unlock PDF', 'Annotate'].includes(tool) || AI_TOOLS[tool]) {
+          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect', 'Unlock PDF', 'Annotate'].includes(tool) || AI_TOOLS[tool] || OFFICE_TOOLS[tool]) {
             setStage('params');
             return;
           }
@@ -270,6 +278,9 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
     }
     if (AI_TOOLS[tool] && chosen[0]) {
       return <AiToolPanel mode={AI_TOOLS[tool]} doc={chosen[0]} onClose={onCancel} />;
+    }
+    if (OFFICE_TOOLS[tool] && chosen[0]) {
+      return <OfficeExportPanel mode={OFFICE_TOOLS[tool]} doc={chosen[0]} onClose={onCancel} />;
     }
     if (tool === 'Annotate') {
       return (

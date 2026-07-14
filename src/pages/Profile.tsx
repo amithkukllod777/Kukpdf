@@ -12,6 +12,8 @@ import { toast } from '../toast';
 import { Browser } from '@capacitor/browser';
 import { AUTH_BASE } from '../kuklabs/authClient';
 import { getAiQuota, type AiQuota } from '../kuklabs/aiClient';
+import { deleteAllRemoteDocs } from '../kuklabs/syncClient';
+import { deleteDoc } from '../db';
 
 const PRO_PLANS = new Set(['premium', 'business']);
 
@@ -59,6 +61,28 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
 
   const isPro = !!quota && PRO_PLANS.has(quota.plan);
   async function openPricing() { await Browser.open({ url: `${AUTH_BASE}/pdf/pricing` }); }
+
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  /** Play/GDPR "delete my data": wipe every local document + signature, and (if
+   * signed in) erase the account's KukPDF cloud documents, then sign out. Full
+   * Kuklabs-account deletion (across all Kuk apps) is a separate account-level flow. */
+  async function deleteMyData() {
+    setDeleting(true);
+    try {
+      if (user) { try { await deleteAllRemoteDocs(); } catch { /* still wipe locally */ } }
+      for (const d of docs) { try { await deleteDoc(d.id); } catch { /* continue */ } }
+      for (const s of signatures) { try { onDeleteSignature(s.id); } catch { /* continue */ } }
+      // Deleting *data* keeps the account signed in; reload so App re-reads the
+      // now-empty local store (props are owned by App).
+      window.location.reload();
+    } catch {
+      toast('Could not delete everything — try again', { type: 'error' });
+      setDeleting(false);
+    }
+  }
+  async function openAccountDeletion() { await Browser.open({ url: `${AUTH_BASE}/account` }); }
 
   /** Export all documents as a single .zip the user can save/share (data portability). */
   async function exportData() {
@@ -201,6 +225,26 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
       <div className="setting"><span>Privacy Policy</span><button onClick={() => onOpenLegal('privacy')}>View</button></div>
       <div className="setting"><span>Terms of Use</span><button onClick={() => onOpenLegal('terms')}>View</button></div>
       <div className="setting"><span>Export my documents</span><button disabled={exporting} onClick={exportData}>{exporting ? 'Exporting…' : 'Export .zip'}</button></div>
+      <div className="setting"><span>Support</span><a href="mailto:support@kuklabs.com?subject=KukPDF%20support">Contact</a></div>
+
+      <h2>Delete my data</h2>
+      <div className="card">
+        {!confirmDelete ? (
+          <>
+            <p className="viewer-status">Permanently deletes all your KukPDF documents on this device{user ? ' and in your Kuklabs cloud' : ''}. This can't be undone.</p>
+            <button className="wide" style={{ color: 'var(--error)', fontWeight: 600 }} onClick={() => setConfirmDelete(true)}>Delete my KukPDF data</button>
+            {user && <button className="link-btn" onClick={openAccountDeletion} style={{ marginTop: 8 }}>Delete my entire Kuklabs account →</button>}
+          </>
+        ) : (
+          <>
+            <p className="viewer-status error">Delete all your KukPDF documents{user ? ' (device + cloud)' : ''}? This can't be undone.</p>
+            <div className="actions">
+              <button onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancel</button>
+              <button style={{ background: 'var(--error)', color: '#fff' }} disabled={deleting} onClick={deleteMyData}>{deleting ? 'Deleting…' : 'Yes, delete everything'}</button>
+            </div>
+          </>
+        )}
+      </div>
 
       {user && (
         <button className="wide" style={{ background: 'transparent', color: 'var(--error)', fontWeight: 600, minHeight: 48, marginTop: 8 }} onClick={onSignOut}>

@@ -24,6 +24,10 @@ Legend — Implementation: ✅ Working · ⚠️ Partial · 🚧 Not built (hone
 | OCR/AI | Searchable PDF (invisible OCR layer) | ✅ | SMOKE | Med |
 | OCR/AI | Summarize PDF / Ask PDF | ✅ live (shared-backend LLM; Pro-gated + daily-capped; on-device text extraction) | FUNCTIONAL (mocked-backend: extract→send→render + 402 upsell verified) | Med |
 | OCR/AI | AI entitlement + usage limits (free trial 3/day · Premium 50 · Business 100 · anon 0) | ✅ server-enforced (reserve-then-release counter) | FUNCTIONAL | Med |
+| Convert | PDF → Word / Excel (server LibreOffice; **Pro-gated + daily-limited**: free 0 · Premium 30 · Business 60) | ✅ server-API (bearer); result download/share; 402 upsell | FUNCTIONAL (mocked-backend: bearer sent → result + 402 upsell) | Med |
+| Account | Delete my data (device + cloud) + link to full Kuklabs account deletion | ✅ | SMOKE | Low |
+| Account | Support / contact link | ✅ (mailto) | SMOKE | Low |
+| Security | allowBackup=false + data-extraction rules (token off backups) | ✅ | CI | Low |
 | Security | Password Protect (real AES-128, pdf-lib-plus-encrypt) | ✅ | SMOKE | Med |
 | Security | Unlock PDF (remove password) | ✅ client-side (pdfjs decrypt + rebuild; pages rasterized) | FUNCTIONAL (protect→unlock→opens-free verified) | Med |
 | Security | App PIN lock + re-lock on background | ✅ | NONE | Med |

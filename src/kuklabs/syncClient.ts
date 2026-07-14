@@ -65,3 +65,10 @@ export async function deleteRemoteDoc(id: string): Promise<void> {
   });
   if (!res.ok && res.status !== 404) throw new Error('Could not delete the document.');
 }
+
+/** Erase ALL of the account's KukPDF cloud documents (Play/GDPR "delete my data").
+ * The shared Kuklabs account itself is deleted separately at the account level. */
+export async function deleteAllRemoteDocs(): Promise<void> {
+  const res = await fetch(`${SYNC_BASE}/docs`, { method: 'DELETE', headers: await authHeaders() });
+  if (!res.ok && res.status !== 404) throw new Error('Could not delete your cloud documents.');
+}

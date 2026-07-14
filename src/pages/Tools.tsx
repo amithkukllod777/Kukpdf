@@ -6,6 +6,7 @@ const toolGroups = [
   ['Create', ['Scan to PDF', 'Image to PDF', 'JPG to PDF']],
   ['Organize', ['Merge PDF', 'Split PDF', 'Rotate PDF', 'Delete Pages', 'Reorder Pages']],
   ['Optimize', ['Compress PDF', 'Repair PDF']],
+  ['Convert', ['PDF to Word', 'PDF to Excel']],
   ['Edit', ['Sign PDF', 'Watermark', 'Page Numbers', 'Annotate']],
   ['OCR & AI', ['Image to Text', 'Searchable PDF', 'Summarize PDF', 'Ask PDF']],
   ['Security', ['Password Protect', 'Unlock PDF', 'Secure Folder']],
