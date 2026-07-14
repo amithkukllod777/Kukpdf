@@ -15,8 +15,10 @@ import LockScreen from './pages/LockScreen';
 import Login from './pages/Login';
 import { dateStamp, fileToDataUrl } from './utils';
 import { pagesToPdf } from './pdf/export';
-import { listDocs, saveDoc, deleteDoc, addTombstone, listSignatures, saveSignature, deleteSignature } from './db';
+import { listDocs, saveDoc, deleteDoc, addTombstone, removeTombstone, listSignatures, saveSignature, deleteSignature } from './db';
 import { syncNow } from './sync';
+import { toast } from './toast';
+import Toaster from './components/Toaster';
 import { pickFromGallery } from './capacitor/camera';
 import { hasPin } from './capacitor/lock';
 import { Browser } from '@capacitor/browser';
@@ -74,11 +76,13 @@ export default function App() {
       const r = await syncNow();
       if (!r.skipped) setDocs(await listDocs());
       if (manual) {
-        setSyncMsg(r.skipped ? 'Sign in to sync your documents.'
-          : `Synced · ${r.uploaded} up · ${r.downloaded} down`);
+        const msg = r.skipped ? 'Sign in to sync your documents.'
+          : `Synced · ${r.uploaded} up · ${r.downloaded} down`;
+        setSyncMsg(msg);
+        toast(msg, { type: r.skipped ? 'info' : 'success' });
       }
     } catch (e: any) {
-      if (manual) setSyncMsg(e?.message || 'Sync failed. Try again.');
+      if (manual) { setSyncMsg(e?.message || 'Sync failed. Try again.'); toast('Sync failed. Try again.', { type: 'error' }); }
     } finally {
       setSyncing(false);
     }
@@ -108,6 +112,7 @@ export default function App() {
   async function handleSignOut() {
     await signOut();
     setUser(null);
+    toast('Signed out');
   }
 
   useEffect(() => {
@@ -173,9 +178,12 @@ export default function App() {
       setDocs((d) => [doc, ...d]);
       setPages([]);
       setTab('files');
+      if (user) runSync();
+      toast('PDF saved to Files');
     } catch (e: any) {
       console.error('exportPdf failed', e);
       setExportError(e?.message || 'Could not build the PDF. Try again with fewer pages.');
+      toast('Could not save the PDF', { type: 'error' });
     } finally {
       setExporting(false);
     }
@@ -204,13 +212,27 @@ export default function App() {
   async function handleDocFromTool(doc: DocItem) {
     await saveDoc(doc);
     setDocs((d) => [doc, ...d]);
+    if (user) runSync();
+    toast('Saved to Files');
   }
 
   async function handleDeleteDoc(id: string) {
+    const doc = docs.find((d) => d.id === id);
     await deleteDoc(id);
     await addTombstone(id); // propagate the delete to the account's other devices
     setDocs((d) => d.filter((x) => x.id !== id));
     if (user) runSync();
+    // Undo guards against accidental data loss (audit UX gap).
+    toast('Document deleted', {
+      type: 'info',
+      action: doc ? { label: 'Undo', onClick: async () => {
+        await saveDoc(doc);
+        await removeTombstone(id);
+        setDocs(await listDocs());
+        if (user) runSync();
+        toast('Document restored');
+      } } : undefined,
+    });
   }
 
   async function handleToggleFavorite(id: string) {
@@ -339,6 +361,7 @@ export default function App() {
         </div>
       )}
       {legalDoc && <LegalModal doc={legalDoc} onClose={() => setLegalDoc(null)} />}
+      <Toaster />
       {showLogin && (
         <Login
           onClose={() => setShowLogin(false)}
