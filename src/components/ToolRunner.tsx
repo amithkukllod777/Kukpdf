@@ -50,6 +50,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [chosen, setChosen] = useState<DocItem[]>([]);
   const [progressText, setProgressText] = useState('');
+  const [progressPct, setProgressPct] = useState<number | null>(null);
   const [result, setResult] = useState<{ blob: Blob; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
@@ -337,9 +338,10 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
               <button onClick={async () => {
                 setStage('running');
                 setProgressText('Running OCR…');
+                setProgressPct(0);
                 if (tool === 'Searchable PDF') {
                   const bytes = await fileOrBlobToBytes(chosen[0].blob);
-                  const out = await buildSearchablePdf(bytes, ocrLang, (p, t, pct) => setProgressText(`OCR page ${p}/${t} · ${pct}%`));
+                  const out = await buildSearchablePdf(bytes, ocrLang, (p, t, pct) => { setProgressText(`OCR page ${p}/${t}`); setProgressPct(pct); });
                   await saveOutput(out, `${stripExt(chosen[0].name)} (searchable).pdf`);
                 } else {
                   const bytes = await fileOrBlobToBytes(chosen[0].blob);
@@ -348,9 +350,10 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
                   for (let i = 1; i <= doc.numPages; i++) {
                     setProgressText(`OCR page ${i}/${doc.numPages}`);
                     const dataUrl = await renderPageToDataUrl(doc, i, 1.6);
-                    all += (await ocrImage(dataUrl, ocrLang, (pct) => setProgressText(`OCR page ${i}/${doc.numPages} · ${pct}%`))) + '\n\n';
+                    all += (await ocrImage(dataUrl, ocrLang, (pct) => setProgressPct(pct))) + '\n\n';
                   }
                   await destroyPdfDoc(doc);
+                  setProgressPct(null);
                   setOcrText(all.trim());
                   setStage('params');
                 }
@@ -368,7 +371,11 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
     return (
       <div className="modal"><div className="sheet">
         <h2>{tool}</h2>
-        <p className="viewer-status">{progressText || 'Working…'}</p>
+        <p className="viewer-status">{progressText || 'Working…'}{progressPct !== null ? ` · ${progressPct}%` : ''}</p>
+        {progressPct !== null && (
+          <div className="progress-track"><div className="progress-fill" style={{ width: `${progressPct}%` }} /></div>
+        )}
+        <div className="actions"><button onClick={onCancel}>Cancel</button></div>
       </div></div>
     );
   }

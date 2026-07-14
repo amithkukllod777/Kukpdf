@@ -5,6 +5,15 @@ import Header from '../components/Header';
 import { hasPin, setPin, clearPin, verifyPin } from '../capacitor/lock';
 import { productBrand, versionLabel } from '../brand';
 import type { KuklabsUser } from '../kuklabs/authClient';
+import { makeZip } from '../export/zip';
+import { sharePdf } from '../capacitor/share';
+import { sanitizeFilename } from '../utils';
+import { toast } from '../toast';
+
+function todayStamp(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 function initials(user: KuklabsUser): string {
   const src = (user.name || user.email || '?').trim();
@@ -31,8 +40,32 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
   const [pinInput, setPinInput] = useState('');
   const [mode, setMode] = useState<'idle' | 'set' | 'unlock'>('idle');
   const [msg, setMsg] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => { hasPin().then(setPinEnabled); }, []);
+
+  /** Export all documents as a single .zip the user can save/share (data portability). */
+  async function exportData() {
+    const items = docs.filter((d) => !d.trashed);
+    if (!items.length) { toast('No documents to export', { type: 'info' }); return; }
+    setExporting(true);
+    try {
+      const used = new Set<string>();
+      const entries = await Promise.all(items.map(async (d) => {
+        let name = sanitizeFilename(d.name.endsWith('.pdf') ? d.name : `${d.name}.pdf`);
+        while (used.has(name)) name = name.replace(/(\.pdf)$/i, `-${Math.random().toString(36).slice(2, 6)}$1`);
+        used.add(name);
+        return { name, data: new Uint8Array(await d.blob.arrayBuffer()) };
+      }));
+      const zip = makeZip(entries);
+      await sharePdf(zip, `KukPDF-documents-${todayStamp()}.zip`);
+      toast(`Exported ${entries.length} document${entries.length > 1 ? 's' : ''}`);
+    } catch (e: any) {
+      toast('Export failed. Try again.', { type: 'error' });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <section>
@@ -138,6 +171,7 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
       <div className="setting"><span>Documents on this device</span><span style={{ fontWeight: 700 }}>{docs.length}</span></div>
       <div className="setting"><span>Privacy Policy</span><button onClick={() => onOpenLegal('privacy')}>View</button></div>
       <div className="setting"><span>Terms of Use</span><button onClick={() => onOpenLegal('terms')}>View</button></div>
+      <div className="setting"><span>Export my documents</span><button disabled={exporting} onClick={exportData}>{exporting ? 'Exporting…' : 'Export .zip'}</button></div>
 
       {user && (
         <button className="wide" style={{ background: 'transparent', color: 'var(--error)', fontWeight: 600, minHeight: 48, marginTop: 8 }} onClick={onSignOut}>
