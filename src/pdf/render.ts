@@ -50,6 +50,37 @@ export async function renderPageToDataUrl(pdf: pdfjsLib.PDFDocumentProxy, pageNu
   return canvas.toDataURL('image/jpeg', quality);
 }
 
+/**
+ * Extract the selectable text from a PDF (all pages), for the AI tools. Returns
+ * "" when the PDF has no text layer (e.g. a pure scan) — callers then tell the
+ * user to run OCR first rather than sending an empty document to the LLM.
+ * `maxChars` bounds the payload so a huge PDF can't blow the request size.
+ */
+export async function extractPdfText(bytes: Uint8Array | ArrayBuffer, maxChars = 120_000): Promise<string> {
+  const pdf = await loadPdfDoc(bytes);
+  try {
+    const parts: string[] = [];
+    let total = 0;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = (content.items as any[])
+        .map((it) => (typeof it.str === 'string' ? it.str : ''))
+        .join(' ')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+      if (pageText) {
+        parts.push(pageText);
+        total += pageText.length;
+        if (total >= maxChars) break;
+      }
+    }
+    return parts.join('\n\n').slice(0, maxChars).trim();
+  } finally {
+    await destroyPdfDoc(pdf);
+  }
+}
+
 export async function pdfPageCount(bytes: Uint8Array | ArrayBuffer): Promise<number> {
   const pdf = await loadPdfDoc(bytes);
   const count = pdf.numPages;

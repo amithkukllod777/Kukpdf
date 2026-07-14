@@ -9,6 +9,11 @@ import { makeZip } from '../export/zip';
 import { sharePdf } from '../capacitor/share';
 import { sanitizeFilename } from '../utils';
 import { toast } from '../toast';
+import { Browser } from '@capacitor/browser';
+import { AUTH_BASE } from '../kuklabs/authClient';
+import { getAiQuota, type AiQuota } from '../kuklabs/aiClient';
+
+const PRO_PLANS = new Set(['premium', 'business']);
 
 function todayStamp(): string {
   const d = new Date();
@@ -41,8 +46,19 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
   const [mode, setMode] = useState<'idle' | 'set' | 'unlock'>('idle');
   const [msg, setMsg] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [quota, setQuota] = useState<AiQuota | null>(null);
 
   useEffect(() => { hasPin().then(setPinEnabled); }, []);
+  // Real plan + AI quota from the shared backend (best-effort; only when signed in).
+  useEffect(() => {
+    let alive = true;
+    if (!user) { setQuota(null); return; }
+    getAiQuota().then((q) => { if (alive) setQuota(q); }).catch(() => {});
+    return () => { alive = false; };
+  }, [user]);
+
+  const isPro = !!quota && PRO_PLANS.has(quota.plan);
+  async function openPricing() { await Browser.open({ url: `${AUTH_BASE}/pdf/pricing` }); }
 
   /** Export all documents as a single .zip the user can save/share (data portability). */
   async function exportData() {
@@ -94,7 +110,20 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
 
       <div className="card pro">
         <Sparkles /><b> KukPDF Pro</b>
-        <p>Unlimited scans, batch OCR and priority support — coming soon with your Kuklabs account.</p>
+        {!user ? (
+          <p>Sign in to your Kuklabs account to use AI tools and unlock Pro. Free accounts get a daily AI trial.</p>
+        ) : isPro ? (
+          <>
+            <p>You're on <b>{quota!.plan === 'business' ? 'Business' : 'Premium'}</b> — AI tools, batch and server tools unlocked.
+              {quota!.limit < 1_000_000 && <> {quota!.remaining} of {quota!.limit} AI calls left today.</>}
+            </p>
+          </>
+        ) : (
+          <>
+            <p>AI tools (Summarize &amp; Ask PDF) are on your free daily trial{quota ? <> — <b>{quota.remaining} of {quota.limit}</b> left today</> : null}. Upgrade for a much higher daily limit, batch and server tools.</p>
+            <button className="wide" onClick={openPricing}>Upgrade to Pro</button>
+          </>
+        )}
       </div>
 
       {user && (

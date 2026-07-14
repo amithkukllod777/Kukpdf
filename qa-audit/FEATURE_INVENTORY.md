@@ -22,7 +22,8 @@ Legend — Implementation: ✅ Working · ⚠️ Partial · 🚧 Not built (hone
 | Edit | Annotate (freehand) | ✅ client-side (pen/eraser/colours, per-page; strokes baked in — pages rasterized) | FUNCTIONAL (seed→draw→save verified) | Med |
 | OCR/AI | Image → Text (Eng + Hindi, offline tesseract) | ✅ | SMOKE | Med |
 | OCR/AI | Searchable PDF (invisible OCR layer) | ✅ | SMOKE | Med |
-| OCR/AI | Summarize PDF / Ask PDF | 🚧 not built (needs LLM backend) | SMOKE (message) | Low |
+| OCR/AI | Summarize PDF / Ask PDF | ✅ live (shared-backend LLM; Pro-gated + daily-capped; on-device text extraction) | FUNCTIONAL (mocked-backend: extract→send→render + 402 upsell verified) | Med |
+| OCR/AI | AI entitlement + usage limits (free trial 3/day · Premium 50 · Business 100 · anon 0) | ✅ server-enforced (reserve-then-release counter) | FUNCTIONAL | Med |
 | Security | Password Protect (real AES-128, pdf-lib-plus-encrypt) | ✅ | SMOKE | Med |
 | Security | Unlock PDF (remove password) | ✅ client-side (pdfjs decrypt + rebuild; pages rasterized) | FUNCTIONAL (protect→unlock→opens-free verified) | Med |
 | Security | App PIN lock + re-lock on background | ✅ | NONE | Med |

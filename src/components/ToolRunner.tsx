@@ -5,6 +5,7 @@ import DocPicker from './DocPicker';
 import PageManager from './PageManager';
 import SignaturePad from './SignaturePad';
 import AnnotateEditor from './AnnotateEditor';
+import AiToolPanel from './AiToolPanel';
 import {
   addPageNumbers,
   addWatermarkText,
@@ -26,9 +27,13 @@ import { downloadBlob } from '../utils';
 import { sharePdf } from '../capacitor/share';
 import { destroyPdfDoc, loadPdfDoc, renderPageToDataUrl } from '../pdf/render';
 
-const UNSUPPORTED: Record<string, string> = {
-  'Summarize PDF': 'AI summaries need a backend LLM service — this app is currently backend-free (client-only). Not built yet.',
-  'Ask PDF': 'Document chat needs a backend LLM + vector search service. Not built yet.',
+const UNSUPPORTED: Record<string, string> = {};
+
+// AI tools use the shared backend LLM (Pro-gated + daily-limited). They pick a
+// PDF like any tool, then open the AI panel instead of running a local pipeline.
+const AI_TOOLS: Record<string, 'summarize' | 'ask'> = {
+  'Summarize PDF': 'summarize',
+  'Ask PDF': 'ask',
 };
 
 const NEEDS_MULTI = new Set(['Merge PDF']);
@@ -89,7 +94,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
             setStage('params');
             return;
           }
-          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect', 'Unlock PDF', 'Annotate'].includes(tool)) {
+          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect', 'Unlock PDF', 'Annotate'].includes(tool) || AI_TOOLS[tool]) {
             setStage('params');
             return;
           }
@@ -262,6 +267,9 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
           </div>
         </div></div>
       );
+    }
+    if (AI_TOOLS[tool] && chosen[0]) {
+      return <AiToolPanel mode={AI_TOOLS[tool]} doc={chosen[0]} onClose={onCancel} />;
     }
     if (tool === 'Annotate') {
       return (
