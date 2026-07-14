@@ -27,7 +27,7 @@ export default function HomePage({ setTab, docs, onOpenTool, onOpenDoc }: {
 
   const quickTools = [
     { label: 'View & Read', icon: FileText, color: '#2563EB', run: () => setTab('files') },
-    { label: 'Edit PDF', icon: Pencil, color: '#EC4899', run: () => onOpenTool('Annotate') },
+    { label: 'Edit PDF', icon: Pencil, color: '#EC4899', run: () => setTab('tools') },
     { label: 'Convert PDF', icon: RefreshCw, color: '#10B981', run: () => onOpenTool('Image to PDF') },
     { label: 'Merge PDF', icon: Layers, color: '#8B5CF6', run: () => onOpenTool('Merge PDF') },
     { label: 'Split PDF', icon: Scissors, color: '#F97316', run: () => onOpenTool('Split PDF') },
