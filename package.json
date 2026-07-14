@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "android:init": "npm install && npx cap add android",
     "android:sync": "npm run build && npx cap sync android",
-    "android:open": "npx cap open android"
+    "android:open": "npx cap open android",
+    "test:smoke": "node tests/smoke.mjs"
   },
   "dependencies": {
     "@capacitor-mlkit/document-scanner": "8.1.0",
