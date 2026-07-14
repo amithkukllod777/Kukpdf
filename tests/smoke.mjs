@@ -11,7 +11,18 @@
  *   CHROMIUM=/path/to/chrome node tests/smoke.mjs
  * Override the base URL with BASE_URL (default http://localhost:5183).
  */
-import { chromium } from 'playwright';
+// Resolve Playwright from the local install if present, else fall back to the
+// global one (dev sandboxes ship it at /opt/node22/lib/node_modules). ESM does
+// not honour NODE_PATH, so we try a sequence of specifiers explicitly.
+let chromium;
+for (const spec of ['playwright', '/opt/node22/lib/node_modules/playwright/index.js']) {
+  try {
+    const m = await import(spec);
+    chromium = m.chromium || m.default?.chromium;   // named (ESM) or default (CJS interop)
+    if (chromium) break;
+  } catch { /* try next */ }
+}
+if (!chromium) { console.error('Playwright not found (local or /opt/node22).'); process.exit(2); }
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5183';
 const exe = process.env.CHROMIUM || undefined; // undefined → playwright's bundled Chromium

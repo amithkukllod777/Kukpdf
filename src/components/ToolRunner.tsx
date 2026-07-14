@@ -4,6 +4,7 @@ import type { DocItem, SignatureItem } from '../types';
 import DocPicker from './DocPicker';
 import PageManager from './PageManager';
 import SignaturePad from './SignaturePad';
+import AnnotateEditor from './AnnotateEditor';
 import {
   addPageNumbers,
   addWatermarkText,
@@ -26,7 +27,6 @@ import { sharePdf } from '../capacitor/share';
 import { destroyPdfDoc, loadPdfDoc, renderPageToDataUrl } from '../pdf/render';
 
 const UNSUPPORTED: Record<string, string> = {
-  Annotate: 'Freehand annotation editing needs a full PDF-editing engine — not built yet.',
   'Summarize PDF': 'AI summaries need a backend LLM service — this app is currently backend-free (client-only). Not built yet.',
   'Ask PDF': 'Document chat needs a backend LLM + vector search service. Not built yet.',
 };
@@ -89,7 +89,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
             setStage('params');
             return;
           }
-          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect', 'Unlock PDF'].includes(tool)) {
+          if (['Rotate PDF', 'Watermark', 'Compress PDF', 'Sign PDF', 'Image to Text', 'Searchable PDF', 'Password Protect', 'Unlock PDF', 'Annotate'].includes(tool)) {
             setStage('params');
             return;
           }
@@ -261,6 +261,18 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
             >Protect</button>
           </div>
         </div></div>
+      );
+    }
+    if (tool === 'Annotate') {
+      return (
+        <AnnotateEditor
+          blob={chosen[0].blob}
+          onCancel={onCancel}
+          onSave={async (bytes) => {
+            setResultNote('Annotations baked in. Pages are rebuilt as images, so existing selectable text becomes non-selectable.');
+            await saveOutput(bytes, `${stripExt(chosen[0].name)} (annotated).pdf`);
+          }}
+        />
       );
     }
     if (tool === 'Unlock PDF') {

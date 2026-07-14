@@ -218,7 +218,8 @@ match.
 - [x] Download generated PDF
 - [x] In-app PDF viewer (renders pages to canvas; no more forced hand-off to an external PDF app)
 - [x] Local document list persists in IndexedDB (survives reload; no longer in-memory demo data)
-- [x] Most tool pages now run real client-side processing (merge/split/rotate/delete/reorder/duplicate/insert-blank/watermark/page-numbers/compress/repair/sign/OCR/searchable-PDF/password-protect); Annotate, Unlock PDF, Summarize PDF and Ask PDF remain UI-only placeholders with an honest "not built yet" message instead of a fake success
+- [x] Most tool pages now run real client-side processing (merge/split/rotate/delete/reorder/duplicate/insert-blank/watermark/page-numbers/compress/repair/sign/OCR/searchable-PDF/password-protect/unlock/annotate); Summarize PDF and Ask PDF remain UI-only placeholders with an honest "not built yet" message (AI backend + Pro subscription gating pending) instead of a fake success
+- [x] Annotate (freehand): pen + eraser + 5 colours, per-page strokes, baked into a new PDF on save (pages rasterized — same tradeoff as Unlock; no full PDF-edit engine client-side). Verified seed→draw→save.
 
 # Phase 1 — Production Native Scanner
 

@@ -19,7 +19,7 @@ Legend — Implementation: ✅ Working · ⚠️ Partial · 🚧 Not built (hone
 | Optimize | Repair PDF (best-effort re-save) | ✅ | SMOKE | Low |
 | Edit | Sign PDF (draw + place signature) | ✅ | SMOKE | Low |
 | Edit | Watermark / Page Numbers | ✅ | SMOKE | Low |
-| Edit | Annotate (freehand) | 🚧 not built | SMOKE (shows message) | Low |
+| Edit | Annotate (freehand) | ✅ client-side (pen/eraser/colours, per-page; strokes baked in — pages rasterized) | FUNCTIONAL (seed→draw→save verified) | Med |
 | OCR/AI | Image → Text (Eng + Hindi, offline tesseract) | ✅ | SMOKE | Med |
 | OCR/AI | Searchable PDF (invisible OCR layer) | ✅ | SMOKE | Med |
 | OCR/AI | Summarize PDF / Ask PDF | 🚧 not built (needs LLM backend) | SMOKE (message) | Low |
