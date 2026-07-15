@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Sparkles, Send, Copy, Crown } from 'lucide-react';
+import { Sparkles, Send, Copy, Crown, X, LogIn } from 'lucide-react';
 import { Browser } from '@capacitor/browser';
 import type { DocItem } from '../types';
 import { extractPdfText } from '../pdf/render';
 import { fileOrBlobToBytes } from '../pdf/tools';
-import { AUTH_BASE } from '../kuklabs/authClient';
+import { AUTH_BASE, getToken } from '../kuklabs/authClient';
 import { getAiQuota, summarizePdf, askPdf, AiError, type AiQuota } from '../kuklabs/aiClient';
 
 /**
@@ -21,6 +21,7 @@ export default function AiToolPanel({ mode, doc, onClose }: {
 }) {
   const [text, setText] = useState<string | null>(null);
   const [prep, setPrep] = useState(true);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null); // null = still checking
   const [quota, setQuota] = useState<AiQuota | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +36,9 @@ export default function AiToolPanel({ mode, doc, onClose }: {
   useEffect(() => {
     let alive = true;
     (async () => {
+      // AI needs a signed-in Kuklabs account — check first so we can show a clear
+      // sign-in prompt instead of doing work and then failing with a 401.
+      try { const token = await getToken(); if (alive) setSignedIn(!!token); } catch { if (alive) setSignedIn(false); }
       try {
         const bytes = await fileOrBlobToBytes(doc.blob);
         const extracted = await extractPdfText(bytes);
@@ -101,10 +105,21 @@ export default function AiToolPanel({ mode, doc, onClose }: {
           {quota && quota.signedIn && quota.limit < 1_000_000 && (
             <span className="ai-quota">{quota.remaining} / {quota.limit} left today</span>
           )}
+          {/* Always-present close so the user is never trapped (e.g. a text-less scan). */}
+          <button className="ai-x" onClick={onClose} aria-label="Close"><X size={18} /></button>
         </div>
         <p className="ai-doc" title={doc.name}>{doc.name}</p>
 
-        {prep && <p className="viewer-status">Reading the document…</p>}
+        {/* Not signed in → AI needs an account. Show a clear prompt, not a silent 401. */}
+        {signedIn === false ? (
+          <>
+            <div className="ai-signin"><LogIn size={22} /></div>
+            <p className="viewer-status">AI tools need your <b>Kuklabs account</b>. Sign in from <b>Profile → Sign in</b>, then come back and try again. (Free accounts get a daily AI trial.)</p>
+            <div className="actions"><button onClick={onClose}>Close</button></div>
+          </>
+        ) : (
+        <>
+        {(prep || signedIn === null) && <p className="viewer-status">Reading the document…</p>}
 
         {!prep && noText && (
           <p className="viewer-status">This PDF has no selectable text (it looks like a scan). Run <b>Image to Text</b> or <b>Searchable PDF</b> first, then try AI on the result.</p>
@@ -163,6 +178,8 @@ export default function AiToolPanel({ mode, doc, onClose }: {
             </div>
             <div className="actions"><button onClick={onClose}>Close</button></div>
           </>
+        )}
+        </>
         )}
       </div>
     </div>

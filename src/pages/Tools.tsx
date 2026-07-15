@@ -4,7 +4,7 @@ import type { Tab } from '../types';
 import { useT, useToolName } from '../i18n';
 
 const toolGroups = [
-  ['Create', ['Scan to PDF', 'Image to PDF', 'JPG to PDF']],
+  ['Create', ['Scan to PDF', 'Image to PDF']],
   ['Organize', ['Merge PDF', 'Split PDF', 'Rotate PDF', 'Delete Pages', 'Reorder Pages']],
   ['Optimize', ['Compress PDF', 'Repair PDF']],
   ['Convert', ['PDF to Word', 'PDF to Excel']],

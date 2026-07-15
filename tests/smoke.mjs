@@ -28,7 +28,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:5183';
 const exe = process.env.CHROMIUM || undefined; // undefined → playwright's bundled Chromium
 
 const TOOLS = [
-  'Scan to PDF', 'Image to PDF', 'JPG to PDF', 'Merge PDF', 'Split PDF', 'Rotate PDF',
+  'Scan to PDF', 'Image to PDF', 'Merge PDF', 'Split PDF', 'Rotate PDF',
   'Delete Pages', 'Reorder Pages', 'Compress PDF', 'Repair PDF', 'PDF to Word', 'PDF to Excel',
   'Sign PDF', 'Watermark', 'Page Numbers', 'Annotate', 'Image to Text', 'Searchable PDF',
   'Summarize PDF', 'Ask PDF', 'Password Protect', 'Unlock PDF', 'Secure Folder',

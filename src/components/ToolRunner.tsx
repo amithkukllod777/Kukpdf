@@ -24,8 +24,8 @@ import {
 } from '../pdf/tools';
 import { imagesToPdf } from '../pdf/export';
 import { ocrImage, OCR_LANGS, type OcrLang } from '../ocr';
-import { downloadBlob } from '../utils';
-import { sharePdf } from '../capacitor/share';
+import { sharePdf, saveFileToDevice } from '../capacitor/share';
+import { toast } from '../toast';
 import { destroyPdfDoc, loadPdfDoc, renderPageToDataUrl } from '../pdf/render';
 
 const UNSUPPORTED: Record<string, string> = {};
@@ -46,7 +46,7 @@ const OFFICE_TOOLS: Record<string, 'docx' | 'xlsx'> = {
 
 const NEEDS_MULTI = new Set(['Merge PDF']);
 const NEEDS_PAGE_MANAGER = new Set(['Delete Pages', 'Reorder Pages']);
-const IMAGE_SOURCE_TOOLS = new Set(['Image to PDF', 'JPG to PDF']);
+const IMAGE_SOURCE_TOOLS = new Set(['Image to PDF']);
 
 export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, onSaveSignature, onImportPdf }: {
   tool: string;
@@ -127,7 +127,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
           hidden
           type="file"
           multiple
-          accept={tool === 'JPG to PDF' ? 'image/jpeg' : 'image/*'}
+          accept="image/*"
           onChange={async (e) => {
             const files = Array.from(e.target.files ?? []);
             e.target.value = '';
@@ -136,7 +136,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
             setProgressText(`Building PDF from ${files.length} image${files.length > 1 ? 's' : ''}…`);
             try {
               const blob = await imagesToPdf(files);
-              setResult({ blob, name: `${tool === 'JPG to PDF' ? 'JPG to PDF' : 'Image to PDF'} ${new Date().toISOString().slice(0, 10)}.pdf` });
+              setResult({ blob, name: `Image to PDF ${new Date().toISOString().slice(0, 10)}.pdf` });
               setStage('result');
             } catch (err: any) {
               setError(err?.message || 'Could not build a PDF from those images');
@@ -456,7 +456,7 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
         <div className="result-head"><CheckCircle2 color="#16a34a" /><h2>Done</h2></div>
         <p className="viewer-status">{resultNote ?? `${result.name} · ${(result.blob.size / 1024).toFixed(0)} KB`}</p>
         <div className="actions">
-          <button onClick={() => downloadBlob(result.blob, result.name)}><Download size={16} />Download</button>
+          <button onClick={async () => { try { toast(await saveFileToDevice(result.blob, result.name)); } catch (e: any) { toast(e?.message || 'Could not save the file', { type: 'error' }); } }}><Download size={16} />Download</button>
           <button onClick={() => sharePdf(result.blob, result.name)}><Share2 size={16} />Share</button>
         </div>
         <div className="actions">

@@ -3,8 +3,8 @@ import { FileText, Sheet, Download, Share2, Crown } from 'lucide-react';
 import { Browser } from '@capacitor/browser';
 import type { DocItem } from '../types';
 import { fileOrBlobToBytes } from '../pdf/tools';
-import { downloadBlob } from '../utils';
-import { sharePdf } from '../capacitor/share';
+import { sharePdf, saveFileToDevice } from '../capacitor/share';
+import { toast } from '../toast';
 import { AUTH_BASE } from '../kuklabs/authClient';
 import { pdfToOffice, getOfficeQuota, OfficeError, type OfficeFormat, type OfficeQuota } from '../kuklabs/officeClient';
 
@@ -57,7 +57,7 @@ export default function OfficeExportPanel({ mode, doc, onClose }: {
         <div className="result-head"><Icon color="#16a34a" /><h2>Done</h2></div>
         <p className="viewer-status">{result.name} · {(result.blob.size / 1024).toFixed(0)} KB · best-effort conversion — check the layout.</p>
         <div className="actions">
-          <button onClick={() => downloadBlob(result.blob, result.name)}><Download size={16} />Download</button>
+          <button onClick={async () => { try { toast(await saveFileToDevice(result.blob, result.name)); } catch (e: any) { toast(e?.message || 'Could not save the file', { type: 'error' }); } }}><Download size={16} />Download</button>
           <button onClick={() => sharePdf(result.blob, result.name)}><Share2 size={16} />Share</button>
         </div>
         <div className="actions"><button onClick={onClose}>Close</button></div>
