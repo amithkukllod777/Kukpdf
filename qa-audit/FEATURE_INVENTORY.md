@@ -20,7 +20,7 @@ Legend — Implementation: ✅ Working · ⚠️ Partial · 🚧 Not built (hone
 | Edit | Sign PDF (draw + place signature) | ✅ | SMOKE | Low |
 | Edit | Watermark / Page Numbers | ✅ | SMOKE | Low |
 | Edit | Annotate (freehand) | ✅ client-side (pen/eraser/colours, per-page; strokes baked in — pages rasterized) | FUNCTIONAL (seed→draw→save verified) | Med |
-| OCR/AI | Image → Text (Eng + Hindi, offline tesseract) | ✅ | SMOKE | Med |
+| OCR/AI | Image → Text (offline tesseract — English, Hindi, Tamil, Telugu, Bengali, Marathi) | ✅ | FUNCTIONAL (Tamil OCR verified fully offline) | Med |
 | OCR/AI | Searchable PDF (invisible OCR layer) | ✅ | SMOKE | Med |
 | OCR/AI | Summarize PDF / Ask PDF | ✅ live (shared-backend LLM; Pro-gated + daily-capped; on-device text extraction) | FUNCTIONAL (mocked-backend: extract→send→render + 402 upsell verified) | Med |
 | OCR/AI | AI entitlement + usage limits (free trial 3/day · Premium 50 · Business 100 · anon 0) | ✅ server-enforced (reserve-then-release counter) | FUNCTIONAL | Med |

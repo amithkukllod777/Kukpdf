@@ -1,9 +1,22 @@
 import { createWorker } from 'tesseract.js';
 
-export type OcrLang = 'eng' | 'hin' | 'eng+hin';
+// Supported OCR languages — all traineddata is vendored under
+// public/vendor/tesseract-lang so every one works fully offline (the India-first
+// moat). `+` combines models (e.g. English + a script) in one pass.
+export const OCR_LANGS = [
+  { code: 'eng', label: 'English' },
+  { code: 'hin', label: 'हिन्दी' },
+  { code: 'tam', label: 'தமிழ்' },
+  { code: 'tel', label: 'తెలుగు' },
+  { code: 'ben', label: 'বাংলা' },
+  { code: 'mar', label: 'मराठी' },
+  { code: 'eng+hin', label: 'Eng + हिन्दी' },
+] as const;
 
-// The OCR engine (worker script, WASM core, and English + Hindi traineddata —
-// the two languages this app targets) is vendored locally under public/vendor
+export type OcrLang = (typeof OCR_LANGS)[number]['code'];
+
+// The OCR engine (worker script, WASM core, and the vendored traineddata for
+// English, Hindi, Tamil, Telugu, Bengali and Marathi) lives under public/vendor
 // so OCR works fully offline, on first launch, with no CDN dependency at all.
 const WORKER_OPTIONS = {
   workerPath: '/vendor/tesseract/worker.min.js',

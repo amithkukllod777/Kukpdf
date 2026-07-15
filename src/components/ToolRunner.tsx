@@ -23,7 +23,7 @@ import {
   unlockPdf,
 } from '../pdf/tools';
 import { imagesToPdf } from '../pdf/export';
-import { ocrImage, type OcrLang } from '../ocr';
+import { ocrImage, OCR_LANGS, type OcrLang } from '../ocr';
 import { downloadBlob } from '../utils';
 import { sharePdf } from '../capacitor/share';
 import { destroyPdfDoc, loadPdfDoc, renderPageToDataUrl } from '../pdf/render';
@@ -394,11 +394,11 @@ export default function ToolRunner({ tool, docs, signatures, onDone, onCancel, o
         <div className="modal"><div className="sheet">
           <h2>{tool}</h2>
           <div className="chips">
-            {(['eng', 'hin', 'eng+hin'] as OcrLang[]).map((l) => (
-              <button key={l} className={ocrLang === l ? 'chip active' : 'chip'} onClick={() => setOcrLang(l)}>{l === 'eng' ? 'English' : l === 'hin' ? 'Hindi' : 'English + Hindi'}</button>
+            {OCR_LANGS.map((l) => (
+              <button key={l.code} className={ocrLang === l.code ? 'chip active' : 'chip'} onClick={() => setOcrLang(l.code)}>{l.label}</button>
             ))}
           </div>
-          <p className="viewer-status">OCR runs fully on-device — English and Hindi work offline, no internet needed.</p>
+          <p className="viewer-status">OCR runs fully on-device — English, Hindi, Tamil, Telugu, Bengali and Marathi all work offline, no internet needed.</p>
           {ocrText !== null && (
             <div className="ocr-result"><pre>{ocrText}</pre></div>
           )}
