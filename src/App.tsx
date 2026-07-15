@@ -4,6 +4,7 @@ import { FolderOpen, Home, ScanLine, User, Wrench } from 'lucide-react';
 import type { CropRect, DocItem, FilterKind, PageItem, ScanMode, SignatureItem, Tab } from './types';
 import Brand from './components/Brand';
 import PdfViewer from './components/PdfViewer';
+import PageManager from './components/PageManager';
 import ToolRunner from './components/ToolRunner';
 import LegalModal from './components/LegalModal';
 import HomePage from './pages/Home';
@@ -56,6 +57,7 @@ export default function App() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [viewerDoc, setViewerDoc] = useState<DocItem | null>(null);
+  const [editDoc, setEditDoc] = useState<DocItem | null>(null);
   const [legalDoc, setLegalDoc] = useState<'privacy' | 'terms' | null>(null);
   const [unlockedSecure, setUnlockedSecure] = useState(false);
   const [locked, setLocked] = useState<boolean | null>(null); // null = still checking
@@ -253,6 +255,34 @@ export default function App() {
     setDocs((d) => d.map((x) => (x.id === id ? next : x)));
   }
 
+  async function handleRenameDoc(id: string, name: string) {
+    const doc = docs.find((d) => d.id === id);
+    if (!doc) return;
+    const next = { ...doc, name, updatedAt: Date.now() };
+    await saveDoc(next);
+    setDocs((d) => d.map((x) => (x.id === id ? next : x)));
+    if (user) runSync();
+  }
+
+  async function handleBulkDelete(ids: string[]) {
+    const removed = docs.filter((d) => ids.includes(d.id));
+    for (const id of ids) { await deleteDoc(id); await addTombstone(id); }
+    setDocs((d) => d.filter((x) => !ids.includes(x.id)));
+    if (user) runSync();
+    toast(`${removed.length} document${removed.length === 1 ? '' : 's'} deleted`, {
+      type: 'info',
+      action: {
+        label: t('common.undo'),
+        onClick: async () => {
+          for (const doc of removed) { await saveDoc(doc); await removeTombstone(doc.id); }
+          setDocs(await listDocs());
+          if (user) runSync();
+          toast('Documents restored');
+        },
+      },
+    });
+  }
+
   async function handleSaveSignature(sig: SignatureItem) {
     await saveSignature(sig);
     setSignatures((s) => [sig, ...s]);
@@ -306,8 +336,11 @@ export default function App() {
             docs={docs}
             onOpen={setViewerDoc}
             onDelete={handleDeleteDoc}
+            onBulkDelete={handleBulkDelete}
             onToggleFavorite={handleToggleFavorite}
             onToggleSecure={handleToggleSecure}
+            onRename={handleRenameDoc}
+            onEdit={setEditDoc}
             unlockedSecure={unlockedSecure}
             onImportPdf={importPdfFile}
           />
@@ -362,6 +395,18 @@ export default function App() {
           </div>
         </div>
       )}
+      {editDoc && (
+        <EditPagesModal
+          doc={editDoc}
+          onCancel={() => setEditDoc(null)}
+          onSave={async (bytes) => {
+            const name = `${editDoc.name.replace(/\.pdf$/i, '')} (edited).pdf`;
+            const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' });
+            handleDocFromTool({ id: crypto.randomUUID(), name, kind: 'pdf', pages: [], createdAt: Date.now(), size: blob.size, blob });
+            setEditDoc(null);
+          }}
+        />
+      )}
       {legalDoc && <LegalModal doc={legalDoc} onClose={() => setLegalDoc(null)} />}
       <Toaster />
       {showLogin && (
@@ -372,4 +417,16 @@ export default function App() {
       )}
     </div>
   );
+}
+
+/** Loads a doc's bytes then mounts the page editor (reorder / rotate / delete pages). */
+function EditPagesModal({ doc, onCancel, onSave }: { doc: DocItem; onCancel: () => void; onSave: (bytes: Uint8Array) => void }) {
+  const [bytes, setBytes] = useState<Uint8Array | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    doc.blob.arrayBuffer().then((b) => { if (!cancelled) setBytes(new Uint8Array(b)); });
+    return () => { cancelled = true; };
+  }, [doc]);
+  if (!bytes) return <div className="modal"><div className="sheet"><p className="viewer-status">Loading…</p></div></div>;
+  return <PageManager bytes={bytes} onCancel={onCancel} onSave={onSave} />;
 }
