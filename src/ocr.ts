@@ -22,6 +22,13 @@ const WORKER_OPTIONS = {
   workerPath: '/vendor/tesseract/worker.min.js',
   corePath: '/vendor/tesseract/',
   langPath: '/vendor/tesseract-lang',
+  // The traineddata is vendored UNCOMPRESSED (.traineddata, not .gz): Android's
+  // asset packaging silently gunzips + strips the .gz from bundled files, so a
+  // gzip request 404s on device and OCR hangs. gzip:false makes tesseract.js
+  // fetch the plain .traineddata that's actually in the bundle. (cacheMethod
+  // 'none' avoids IndexedDB caching a file we already ship offline.)
+  gzip: false,
+  cacheMethod: 'none' as const,
 };
 
 /** Runs OCR on an image data URL entirely on-device via tesseract.js (WASM). */
