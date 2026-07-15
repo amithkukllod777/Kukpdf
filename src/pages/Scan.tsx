@@ -7,6 +7,7 @@ import { filterCss, filters, modes } from '../utils';
 import { captureFromCamera } from '../capacitor/camera';
 import { installNativeScannerModule, isNativeScannerAvailable, scanWithNativeScanner } from '../capacitor/documentScanner';
 import { Capacitor } from '@capacitor/core';
+import { useT } from '../i18n';
 
 export default function ScanPage({
   pages, mode, setMode, activeFilter, setActiveFilter,
@@ -30,6 +31,7 @@ export default function ScanPage({
   autoStart?: boolean;
   onAutoStartDone?: () => void;
 }) {
+  const t = useT();
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [cropping, setCropping] = useState<string | null>(null);
   const [scannerReady, setScannerReady] = useState<boolean | null>(null); // null = still checking
@@ -100,18 +102,12 @@ export default function ScanPage({
         <>
           <div className="scan-hero">
             <span className="scan-glyph">{scannerReady ? <ScanLine /> : <Camera />}</span>
-            <b>Ready to Scan</b>
-            <span>
-              {scannerReady
-                ? "Opens the camera with live edge detection, auto-crop and multi-page capture."
-                : isAndroid && scannerReady === false
-                  ? 'Auto-scan needs a small one-time download — or use the plain camera now.'
-                  : 'Opens your camera. Crop manually after capture.'}
-            </span>
+            <b>{t('scan.ready')}</b>
+            <span>{t('scan.hint')}</span>
             <button className="scan-cta" onClick={shutter} disabled={busy}>
-              {scanning ? 'Opening scanner…'
-                : installing !== null ? `Enabling auto-scan… ${installing}%`
-                : <>{scannerReady ? <ScanLine /> : <Camera />}Scan a document</>}
+              {scanning ? t('scan.opening')
+                : installing !== null ? `${installing}%`
+                : <>{scannerReady ? <ScanLine /> : <Camera />}{t('scan.cta')}</>}
             </button>
           </div>
           {isAndroid && scannerReady === false && installing === null && (
@@ -120,16 +116,16 @@ export default function ScanPage({
             </div>
           )}
           <div className="scan-secondary">
-            <button onClick={onImportPhotos}><ImagePlus />Import photos</button>
-            <button onClick={() => pdfInputRef.current?.click()}><FileText />Import PDF</button>
+            <button onClick={onImportPhotos}><ImagePlus />{t('scan.importPhotos')}</button>
+            <button onClick={() => pdfInputRef.current?.click()}><FileText />{t('scan.importPdf')}</button>
           </div>
         </>
       ) : (
         <>
           <div className="scan-status-mini">
             <span className="dot" />
-            <b>{pages.length} page{pages.length > 1 ? 's' : ''} scanned</b>
-            <span>· keep going or save</span>
+            <b>{t('scan.pagesScanned', { n: pages.length })}</b>
+            <span>{t('scan.keepGoing')}</span>
           </div>
           <div className="pages">
             {pages.map((p, i) => (
@@ -140,7 +136,7 @@ export default function ScanPage({
             ))}
             <button className="add-page" onClick={shutter} disabled={busy}><Plus /></button>
           </div>
-          <h2>Filter</h2>
+          <h2>{t('scan.filter')}</h2>
           <div className="chips" style={{ paddingTop: 0 }}>
             {filters.map((f) => (
               <button key={f} className={activeFilter === f ? 'chip active' : 'chip'} onClick={() => setActiveFilter(f)}>{f}</button>
@@ -148,10 +144,10 @@ export default function ScanPage({
           </div>
           <div className="export-row">
             <button onClick={shutter} disabled={busy}>
-              {scannerReady ? <ScanLine /> : <Camera />}{scanning ? 'Opening…' : 'Scan more'}
+              {scannerReady ? <ScanLine /> : <Camera />}{scanning ? t('scan.opening') : t('scan.scanMore')}
             </button>
             <button onClick={exportPdf} disabled={exporting}>
-              <FileText />{exporting ? 'Saving…' : 'Save as PDF'}
+              <FileText />{exporting ? t('scan.saving') : t('scan.exportPdf')}
             </button>
           </div>
         </>
@@ -175,10 +171,10 @@ export default function ScanPage({
           <div className="sheet">
             <img src={selected.dataUrl} style={{ filter: filterCss(selected.filter), transform: `rotate(${selected.rotation}deg)` }} />
             <div className="actions">
-              <button onClick={() => rotatePage(selected.id)}><RotateCw />Rotate</button>
-              <button onClick={() => { setCropping(selected.id); setSelectedPage(null); }}><Crop />Crop</button>
-              <button onClick={() => { deletePage(selected.id); setSelectedPage(null); }}><Trash2 />Delete</button>
-              <button onClick={() => setSelectedPage(null)}>Done</button>
+              <button onClick={() => rotatePage(selected.id)}><RotateCw />{t('scan.rotate')}</button>
+              <button onClick={() => { setCropping(selected.id); setSelectedPage(null); }}><Crop />{t('scan.crop')}</button>
+              <button onClick={() => { deletePage(selected.id); setSelectedPage(null); }}><Trash2 />{t('common.delete')}</button>
+              <button onClick={() => setSelectedPage(null)}>{t('common.done')}</button>
             </div>
           </div>
         </div>

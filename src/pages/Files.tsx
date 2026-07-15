@@ -3,8 +3,12 @@ import { Upload } from 'lucide-react';
 import type { DocItem } from '../types';
 import Header from '../components/Header';
 import FileRow from '../components/FileRow';
+import { useT } from '../i18n';
 
 type FilterTab = 'All' | 'Scanned' | 'PDFs' | 'Favorites' | 'Secure';
+const FILTER_KEY: Record<FilterTab, string> = {
+  All: 'files.all', Scanned: 'files.scanned', PDFs: 'files.pdfs', Favorites: 'files.favorites', Secure: 'files.secure',
+};
 
 export default function FilesPage({ docs, onOpen, onDelete, onToggleFavorite, onToggleSecure, unlockedSecure, onImportPdf }: {
   docs: DocItem[];
@@ -15,6 +19,7 @@ export default function FilesPage({ docs, onOpen, onDelete, onToggleFavorite, on
   unlockedSecure: boolean;
   onImportPdf: (file: File) => Promise<DocItem>;
 }) {
+  const t = useT();
   const [tab, setTab] = useState<FilterTab>('All');
   const [importing, setImporting] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
@@ -29,9 +34,9 @@ export default function FilesPage({ docs, onOpen, onDelete, onToggleFavorite, on
 
   return (
     <section>
-      <Header title="Files" sub={`${visible.length} documents`} />
+      <Header title={t('files.title')} sub={t('files.docsCount', { n: visible.length })} />
       <button className="primary wide" disabled={importing} onClick={() => importRef.current?.click()}>
-        <Upload size={16} /> {importing ? 'Importing…' : 'Import a PDF from this device'}
+        <Upload size={16} /> {importing ? t('files.importing') : t('files.importPdf')}
       </button>
       <input
         ref={importRef}
@@ -51,13 +56,13 @@ export default function FilesPage({ docs, onOpen, onDelete, onToggleFavorite, on
         }}
       />
       <div className="tabs">
-        {(['All', 'Scanned', 'PDFs', 'Favorites', 'Secure'] as FilterTab[]).map((t) => (
-          <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>{t}</button>
+        {(['All', 'Scanned', 'PDFs', 'Favorites', 'Secure'] as FilterTab[]).map((ft) => (
+          <button key={ft} className={tab === ft ? 'active' : ''} onClick={() => setTab(ft)}>{t(FILTER_KEY[ft])}</button>
         ))}
       </div>
-      {tab === 'Secure' && !unlockedSecure && <p className="viewer-status">Enter your PIN in Profile → Secure Folder to view these.</p>}
+      {tab === 'Secure' && !unlockedSecure && <p className="viewer-status">{t('files.secureHint')}</p>}
       <div className="list">
-        {filtered.length === 0 && <p className="viewer-status">No documents here yet.</p>}
+        {filtered.length === 0 && <p className="viewer-status">{t('files.emptyHere')}</p>}
         {(tab === 'Secure' && !unlockedSecure ? [] : filtered).map((d) => (
           <FileRow
             key={d.id}

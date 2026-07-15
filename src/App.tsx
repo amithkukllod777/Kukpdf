@@ -24,6 +24,7 @@ import { hasPin } from './capacitor/lock';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { exchangeGoogleCode, getCurrentUser, signOut, type KuklabsUser } from './kuklabs/authClient';
+import { useT } from './i18n';
 
 const pathToTab: Record<string, Tab> = { '/': 'home', '/tools': 'tools', '/scan': 'scan', '/files': 'files', '/profile': 'profile' };
 const tabToPath: Record<Tab, string> = { home: '/', tools: '/tools', scan: '/scan', files: '/files', profile: '/profile' };
@@ -44,6 +45,7 @@ const navItems = [
 ];
 
 export default function App() {
+  const t = useT();
   const [tab, setTabState] = useState<Tab>(initialTab);
   const [docs, setDocs] = useState<DocItem[]>([]);
   const [signatures, setSignatures] = useState<SignatureItem[]>([]);
@@ -225,7 +227,7 @@ export default function App() {
     // Undo guards against accidental data loss (audit UX gap).
     toast('Document deleted', {
       type: 'info',
-      action: doc ? { label: 'Undo', onClick: async () => {
+      action: doc ? { label: t('common.undo'), onClick: async () => {
         await saveDoc(doc);
         await removeTombstone(id);
         setDocs(await listDocs());
@@ -333,9 +335,9 @@ export default function App() {
             key={n.id}
             className={`${tab === n.id ? 'active' : ''}${n.id === 'scan' ? ' scan-fab' : ''}`}
             onClick={() => setTab(n.id)}
-            aria-label={n.label}
+            aria-label={t(`nav.${n.id}`)}
           >
-            <n.icon size={20} /><span>{n.label}</span>
+            <n.icon size={20} /><span>{t(`nav.${n.id}`)}</span>
           </button>
         ))}
       </nav>

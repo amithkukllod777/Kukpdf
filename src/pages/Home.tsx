@@ -6,6 +6,7 @@ import type { DocItem, Tab } from '../types';
 import ToolCard from '../components/ToolCard';
 import FileRow from '../components/FileRow';
 import { ALL_TOOLS } from './Tools';
+import { useT, useToolName } from '../i18n';
 
 /**
  * Home — matches the official KukPDF product screen: "KukPDF" wordmark + Pro
@@ -19,21 +20,23 @@ export default function HomePage({ setTab, docs, onOpenTool, onOpenDoc }: {
   onOpenTool: (tool: string) => void;
   onOpenDoc: (doc: DocItem) => void;
 }) {
+  const t = useT();
+  const toolName = useToolName();
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
   const searching = q.length > 0;
   const matchedDocs = searching ? docs.filter((d) => !d.trashed && d.name.toLowerCase().includes(q)) : [];
-  const matchedTools = searching ? ALL_TOOLS.filter((t) => t.toLowerCase().includes(q)) : [];
+  const matchedTools = searching ? ALL_TOOLS.filter((name) => name.toLowerCase().includes(q)) : [];
 
   const quickTools = [
-    { label: 'View & Read', icon: FileText, color: '#2563EB', run: () => setTab('files') },
-    { label: 'Edit PDF', icon: Pencil, color: '#EC4899', run: () => setTab('tools') },
-    { label: 'Convert PDF', icon: RefreshCw, color: '#10B981', run: () => onOpenTool('Image to PDF') },
-    { label: 'Merge PDF', icon: Layers, color: '#8B5CF6', run: () => onOpenTool('Merge PDF') },
-    { label: 'Split PDF', icon: Scissors, color: '#F97316', run: () => onOpenTool('Split PDF') },
-    { label: 'Compress PDF', icon: Minimize2, color: '#3B82F6', run: () => onOpenTool('Compress PDF') },
-    { label: 'Protect PDF', icon: Lock, color: '#F59E0B', run: () => onOpenTool('Password Protect') },
-    { label: 'Organize Pages', icon: Files, color: '#22C55E', run: () => onOpenTool('Reorder Pages') },
+    { label: t('home.qt.view'), icon: FileText, color: '#2563EB', run: () => setTab('files') },
+    { label: t('home.qt.edit'), icon: Pencil, color: '#EC4899', run: () => setTab('tools') },
+    { label: t('home.qt.convert'), icon: RefreshCw, color: '#10B981', run: () => onOpenTool('Image to PDF') },
+    { label: t('home.qt.merge'), icon: Layers, color: '#8B5CF6', run: () => onOpenTool('Merge PDF') },
+    { label: t('home.qt.split'), icon: Scissors, color: '#F97316', run: () => onOpenTool('Split PDF') },
+    { label: t('home.qt.compress'), icon: Minimize2, color: '#3B82F6', run: () => onOpenTool('Compress PDF') },
+    { label: t('home.qt.protect'), icon: Lock, color: '#F59E0B', run: () => onOpenTool('Password Protect') },
+    { label: t('home.qt.organize'), icon: Files, color: '#22C55E', run: () => onOpenTool('Reorder Pages') },
   ];
 
   const recent = docs.filter((d) => !d.trashed).slice(0, 4);
@@ -56,27 +59,27 @@ export default function HomePage({ setTab, docs, onOpenTool, onOpenDoc }: {
 
       <div className="search">
         <Search size={18} />
-        <input placeholder="Search PDF" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input placeholder={t('common.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
 
       {searching ? (
         <>
-          <h2>Tools ({matchedTools.length})</h2>
+          <h2>{t('home.toolsCount')} ({matchedTools.length})</h2>
           <div className="grid">
-            {matchedTools.length === 0 && <p className="viewer-status">No matching tools.</p>}
-            {matchedTools.map((t) => (
-              <ToolCard key={t} label={t} onClick={() => (t === 'Scan to PDF' ? setTab('scan') : t === 'Secure Folder' ? setTab('profile') : onOpenTool(t))} />
+            {matchedTools.length === 0 && <p className="viewer-status">{t('home.noMatchTools')}</p>}
+            {matchedTools.map((name) => (
+              <ToolCard key={name} label={toolName(name)} onClick={() => (name === 'Scan to PDF' ? setTab('scan') : name === 'Secure Folder' ? setTab('profile') : onOpenTool(name))} />
             ))}
           </div>
-          <h2>Files ({matchedDocs.length})</h2>
+          <h2>{t('home.filesCount')} ({matchedDocs.length})</h2>
           <div className="list">
-            {matchedDocs.length === 0 && <p className="viewer-status">No matching files.</p>}
+            {matchedDocs.length === 0 && <p className="viewer-status">{t('home.noMatchFiles')}</p>}
             {matchedDocs.map((d) => <FileRow key={d.id} d={d} onOpen={() => onOpenDoc(d)} />)}
           </div>
         </>
       ) : (
         <>
-          <h2 className="home-h2">Quick Tools</h2>
+          <h2 className="home-h2">{t('home.quickTools')}</h2>
           <div className="qt-grid">
             {quickTools.map((t) => (
               <button key={t.label} className="qt-card" onClick={t.run}>
@@ -88,9 +91,9 @@ export default function HomePage({ setTab, docs, onOpenTool, onOpenDoc }: {
             ))}
           </div>
 
-          <h2 className="home-h2">Recent Files</h2>
+          <h2 className="home-h2">{t('home.recentFiles')}</h2>
           <div className="list">
-            {recent.length === 0 && <p className="viewer-status">No documents yet — tap the scan button below to start.</p>}
+            {recent.length === 0 && <p className="viewer-status">{t('home.noRecent')}</p>}
             {recent.map((d) => <FileRow key={d.id} d={d} onOpen={() => onOpenDoc(d)} />)}
           </div>
         </>

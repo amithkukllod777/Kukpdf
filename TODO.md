@@ -775,3 +775,9 @@ KukPDF V1 is not complete until users can reliably: scan with native camera, aut
 - [x] Support / contact link in Profile (mailto:support@kuklabs.com).
 - [x] `allowBackup=false` + `data_extraction_rules.xml` (cloud + device-transfer excluded) so the session token/docs stay off Google backups & adb.
 - [ ] Still pending for public Production: hosted Privacy URL, Data-safety form, crash reporting (needs DSN), secure token-at-rest, device round-trip of Google login + cloud sync. Larger competitive items: Hindi app UI (i18n), more Indian OCR scripts.
+
+## Batch: Hindi app UI (i18n) (2026-07-14)
+- [x] Lightweight i18n (`src/i18n.ts`, no dependency): en/hi flat dictionary with {var} interpolation + English fallback; `useT()` / `useI18n()` / `useToolName()`. Language persisted in Preferences; first run defaults to device locale (Hindi if the device is Hindi). `I18nProvider` wraps the app in `main.tsx`. Language toggle (English / हिन्दी) in Profile.
+- [x] Translated: bottom nav, Home (search, Quick Tools + all labels, Recent Files, search results), Tools (title/sub, group headings, all tool names), Files (header, filters, import, empties), Scan (ready/CTA/import/filter/scan-more/save/rotate/crop/delete/done), Profile (identity, Pro, Cloud sync, Security, Signatures, About, Delete-my-data, Sign out, Language). Verified in Playwright (Hindi Home + Tools screenshots).
+- [x] **Login/auth screen stays English** — per the Kuklabs Auth Pack the auth content is the standardised shared copy and must not be re-translated per product.
+- [ ] Phase 2 (still English): deep tool-flow micro-copy inside ToolRunner (progress/notes/errors), DocPicker, and a few native-only scanner status sentences — to be translated incrementally.

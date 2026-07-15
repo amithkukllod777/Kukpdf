@@ -1,6 +1,7 @@
 import Header from '../components/Header';
 import ToolCard from '../components/ToolCard';
 import type { Tab } from '../types';
+import { useT, useToolName } from '../i18n';
 
 const toolGroups = [
   ['Create', ['Scan to PDF', 'Image to PDF', 'JPG to PDF']],
@@ -15,15 +16,17 @@ const toolGroups = [
 export const ALL_TOOLS: string[] = toolGroups.flatMap(([, tools]) => tools);
 
 export default function ToolsPage({ setTab, onOpenTool }: { setTab: (t: Tab) => void; onOpenTool: (tool: string) => void }) {
+  const t = useT();
+  const toolName = useToolName();
   return (
     <section>
-      <Header title="PDF Tools" sub="Create, organize, optimize, edit, OCR and secure PDFs" />
+      <Header title={t('tools.title')} sub={t('tools.sub')} />
       {toolGroups.map(([group, tools]) => (
         <div key={group}>
-          <h2>{group}</h2>
+          <h2>{t(`tools.group.${group}`)}</h2>
           <div className="grid">
-            {tools.map((t) => (
-              <ToolCard key={t} label={t} onClick={() => (t === 'Scan to PDF' ? setTab('scan') : t === 'Secure Folder' ? setTab('profile') : onOpenTool(t))} />
+            {tools.map((name) => (
+              <ToolCard key={name} label={toolName(name)} onClick={() => (name === 'Scan to PDF' ? setTab('scan') : name === 'Secure Folder' ? setTab('profile') : onOpenTool(name))} />
             ))}
           </div>
         </div>

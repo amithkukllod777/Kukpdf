@@ -14,6 +14,7 @@ import { AUTH_BASE } from '../kuklabs/authClient';
 import { getAiQuota, type AiQuota } from '../kuklabs/aiClient';
 import { deleteAllRemoteDocs } from '../kuklabs/syncClient';
 import { deleteDoc } from '../db';
+import { useI18n } from '../i18n';
 
 const PRO_PLANS = new Set(['premium', 'business']);
 
@@ -43,6 +44,7 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
   syncing: boolean;
   syncMsg: string | null;
 }) {
+  const { t, lang, setLang } = useI18n();
   const [pinEnabled, setPinEnabled] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [mode, setMode] = useState<'idle' | 'set' | 'unlock'>('idle');
@@ -125,15 +127,15 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
         <button className="identity-card" style={{ width: '100%', textAlign: 'left' }} onClick={onSignIn}>
           <div className="avatar"><LogIn size={26} /></div>
           <div className="tx">
-            <b>Sign in to Kuklabs</b>
-            <span>One account across every Kuk app</span>
+            <b>{t('profile.signInKuklabs')}</b>
+            <span>{t('profile.oneAccount')}</span>
           </div>
           <ChevronRight className="go" size={20} />
         </button>
       )}
 
       <div className="card pro">
-        <Sparkles /><b> KukPDF Pro</b>
+        <Sparkles /><b> {t('profile.pro')}</b>
         {!user ? (
           <p>Sign in to your Kuklabs account to use AI tools and unlock Pro. Free accounts get a daily AI trial.</p>
         ) : isPro ? (
@@ -145,34 +147,42 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
         ) : (
           <>
             <p>AI tools (Summarize &amp; Ask PDF) are on your free daily trial{quota ? <> — <b>{quota.remaining} of {quota.limit}</b> left today</> : null}. Upgrade for a much higher daily limit, batch and server tools.</p>
-            <button className="wide" onClick={openPricing}>Upgrade to Pro</button>
+            <button className="wide" onClick={openPricing}>{t('profile.upgrade')}</button>
           </>
         )}
       </div>
 
+      <h2>{t('profile.language')}</h2>
+      <div className="card">
+        <div className="chips" style={{ padding: 0 }}>
+          <button className={lang === 'en' ? 'chip active' : 'chip'} onClick={() => setLang('en')}>English</button>
+          <button className={lang === 'hi' ? 'chip active' : 'chip'} onClick={() => setLang('hi')}>हिन्दी</button>
+        </div>
+      </div>
+
       {user && (
         <>
-          <h2>Cloud sync</h2>
+          <h2>{t('profile.cloudSync')}</h2>
           <div className="card sync-card">
             <div className="sync-head">
               <span className="sync-ico"><CloudUpload size={18} /></span>
               <div className="tx">
-                <b>Back up &amp; sync</b>
+                <b>{t('profile.backupSync')}</b>
                 <span>Your PDFs sync to your Kuklabs account across devices.</span>
               </div>
             </div>
-            <button className="wide" disabled={syncing} onClick={onSync}>{syncing ? 'Syncing…' : 'Sync now'}</button>
+            <button className="wide" disabled={syncing} onClick={onSync}>{syncing ? t('profile.syncing') : t('profile.syncNow')}</button>
             {syncMsg && <p className="viewer-status">{syncMsg}</p>}
           </div>
         </>
       )}
 
-      <h2>Security</h2>
+      <h2>{t('profile.security')}</h2>
       <div className="card">
         {!pinEnabled && mode === 'idle' && (
           <>
-            <p style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Shield size={16} /> App lock is off.</p>
-            <button onClick={() => setMode('set')}>Set app PIN</button>
+            <p style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Shield size={16} /> {t('profile.appLockOff')}</p>
+            <button onClick={() => setMode('set')}>{t('profile.setPin')}</button>
           </>
         )}
         {mode === 'set' && (
@@ -186,10 +196,10 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
         )}
         {pinEnabled && mode === 'idle' && (
           <>
-            <p style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Shield size={16} /> App lock is on.</p>
+            <p style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Shield size={16} /> {t('profile.appLockOn')}</p>
             <div className="actions">
-              <button onClick={() => setMode('unlock')}>Unlock Secure Folder</button>
-              <button onClick={async () => { await clearPin(); setPinEnabled(false); setMsg('App PIN removed.'); }}>Remove PIN</button>
+              <button onClick={() => setMode('unlock')}>{t('profile.unlockSecure')}</button>
+              <button onClick={async () => { await clearPin(); setPinEnabled(false); setMsg('App PIN removed.'); }}>{t('profile.removePin')}</button>
             </div>
           </>
         )}
@@ -208,7 +218,7 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
         {msg && <p className="viewer-status">{msg}</p>}
       </div>
 
-      <h2>Saved signatures</h2>
+      <h2>{t('profile.savedSignatures')}</h2>
       <div className="list">
         {signatures.length === 0 && <p className="viewer-status">None yet — created from the Sign PDF tool.</p>}
         {signatures.map((s) => (
@@ -220,27 +230,27 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
         ))}
       </div>
 
-      <h2>About this app</h2>
-      <div className="setting"><span>Documents on this device</span><span style={{ fontWeight: 700 }}>{docs.length}</span></div>
-      <div className="setting"><span>Privacy Policy</span><button onClick={() => onOpenLegal('privacy')}>View</button></div>
-      <div className="setting"><span>Terms of Use</span><button onClick={() => onOpenLegal('terms')}>View</button></div>
-      <div className="setting"><span>Export my documents</span><button disabled={exporting} onClick={exportData}>{exporting ? 'Exporting…' : 'Export .zip'}</button></div>
-      <div className="setting"><span>Support</span><a href="mailto:support@kuklabs.com?subject=KukPDF%20support">Contact</a></div>
+      <h2>{t('profile.about')}</h2>
+      <div className="setting"><span>{t('profile.docsOnDevice')}</span><span style={{ fontWeight: 700 }}>{docs.length}</span></div>
+      <div className="setting"><span>{t('profile.privacy')}</span><button onClick={() => onOpenLegal('privacy')}>{t('common.view')}</button></div>
+      <div className="setting"><span>{t('profile.terms')}</span><button onClick={() => onOpenLegal('terms')}>{t('common.view')}</button></div>
+      <div className="setting"><span>{t('profile.export')}</span><button disabled={exporting} onClick={exportData}>{exporting ? t('profile.exporting') : 'Export .zip'}</button></div>
+      <div className="setting"><span>{t('profile.support')}</span><a href="mailto:support@kuklabs.com?subject=KukPDF%20support">{t('profile.contact')}</a></div>
 
-      <h2>Delete my data</h2>
+      <h2>{t('profile.deleteData')}</h2>
       <div className="card">
         {!confirmDelete ? (
           <>
             <p className="viewer-status">Permanently deletes all your KukPDF documents on this device{user ? ' and in your Kuklabs cloud' : ''}. This can't be undone.</p>
-            <button className="wide" style={{ color: 'var(--error)', fontWeight: 600 }} onClick={() => setConfirmDelete(true)}>Delete my KukPDF data</button>
-            {user && <button className="link-btn" onClick={openAccountDeletion} style={{ marginTop: 8 }}>Delete my entire Kuklabs account →</button>}
+            <button className="wide" style={{ color: 'var(--error)', fontWeight: 600 }} onClick={() => setConfirmDelete(true)}>{t('profile.deleteMyKukpdf')}</button>
+            {user && <button className="link-btn" onClick={openAccountDeletion} style={{ marginTop: 8 }}>{t('profile.deleteAccount')}</button>}
           </>
         ) : (
           <>
             <p className="viewer-status error">Delete all your KukPDF documents{user ? ' (device + cloud)' : ''}? This can't be undone.</p>
             <div className="actions">
               <button onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancel</button>
-              <button style={{ background: 'var(--error)', color: '#fff' }} disabled={deleting} onClick={deleteMyData}>{deleting ? 'Deleting…' : 'Yes, delete everything'}</button>
+              <button style={{ background: 'var(--error)', color: '#fff' }} disabled={deleting} onClick={deleteMyData}>{deleting ? t('profile.deleting') : t('profile.deleteConfirm')}</button>
             </div>
           </>
         )}
@@ -248,7 +258,7 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
 
       {user && (
         <button className="wide" style={{ background: 'transparent', color: 'var(--error)', fontWeight: 600, minHeight: 48, marginTop: 8 }} onClick={onSignOut}>
-          Sign out
+          {t('profile.signOut')}
         </button>
       )}
 
