@@ -13,6 +13,7 @@ import { Browser } from '@capacitor/browser';
 import { AUTH_BASE } from '../kuklabs/authClient';
 import { getAiQuota, type AiQuota } from '../kuklabs/aiClient';
 import { deleteAllRemoteDocs } from '../kuklabs/syncClient';
+import { requestAccountDeletion, getDeletionStatus } from '../kuklabs/accountClient';
 import { deleteDoc } from '../db';
 import { useI18n } from '../i18n';
 
@@ -84,7 +85,31 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
       setDeleting(false);
     }
   }
-  async function openAccountDeletion() { await Browser.open({ url: `${AUTH_BASE}/account` }); }
+  // Account deletion is a REQUEST, not an in-app hard delete: the Kuklabs Account
+  // is shared across every Kuk app, so the team removes it and emails the user a
+  // confirmation. (Deleting KukPDF *documents* is the separate "delete my data".)
+  const [reqConfirm, setReqConfirm] = useState(false);
+  const [reqSending, setReqSending] = useState(false);
+  const [reqPending, setReqPending] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    if (!user) { setReqPending(false); return; }
+    getDeletionStatus().then((s) => { if (alive) setReqPending(s.pending); }).catch(() => {});
+    return () => { alive = false; };
+  }, [user]);
+  async function submitAccountDeletion() {
+    setReqSending(true);
+    try {
+      await requestAccountDeletion();
+      setReqPending(true);
+      setReqConfirm(false);
+      toast(t('profile.reqDeleteDone'));
+    } catch (e: any) {
+      toast(e?.message || 'Could not submit your request. Please try again.', { type: 'error' });
+    } finally {
+      setReqSending(false);
+    }
+  }
 
   /** Export all documents as a single .zip the user can save/share (data portability). */
   async function exportData() {
@@ -243,7 +268,23 @@ export default function ProfilePage({ docs, signatures, user, onSignIn, onSignOu
           <>
             <p className="viewer-status">Permanently deletes all your KukPDF documents on this device{user ? ' and in your Kuklabs cloud' : ''}. This can't be undone.</p>
             <button className="wide" style={{ color: 'var(--error)', fontWeight: 600 }} onClick={() => setConfirmDelete(true)}>{t('profile.deleteMyKukpdf')}</button>
-            {user && <button className="link-btn" onClick={openAccountDeletion} style={{ marginTop: 8 }}>{t('profile.deleteAccount')}</button>}
+            {user && (
+              reqPending ? (
+                <p className="viewer-status" style={{ marginTop: 8 }}>{t('profile.reqDeletePending')}</p>
+              ) : reqConfirm ? (
+                <>
+                  <p className="viewer-status" style={{ marginTop: 8 }}>{t('profile.reqDeleteConfirm')}</p>
+                  <div className="actions">
+                    <button onClick={() => setReqConfirm(false)} disabled={reqSending}>Cancel</button>
+                    <button style={{ color: 'var(--error)', fontWeight: 600 }} disabled={reqSending} onClick={submitAccountDeletion}>
+                      {reqSending ? t('profile.reqDeleteSending') : t('profile.reqDeleteCta')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button className="link-btn" onClick={() => setReqConfirm(true)} style={{ marginTop: 8 }}>{t('profile.deleteAccount')}</button>
+              )
+            )}
           </>
         ) : (
           <>
