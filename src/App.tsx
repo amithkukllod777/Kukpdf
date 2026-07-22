@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { App as CapApp } from '@capacitor/app';
-import { FolderOpen, Home, ScanLine, User, Wrench } from 'lucide-react';
+import { Download, FolderOpen, Home, ScanLine, Share2, User, Wrench } from 'lucide-react';
 import type { CropRect, DocItem, FilterKind, PageItem, ScanMode, SignatureItem, Tab } from './types';
 import Brand from './components/Brand';
 import PdfViewer from './components/PdfViewer';
@@ -21,6 +21,7 @@ import { syncNow } from './sync';
 import { toast } from './toast';
 import Toaster from './components/Toaster';
 import { pickFromGallery } from './capacitor/camera';
+import { sharePdf, saveFileToDevice } from './capacitor/share';
 import { hasPin } from './capacitor/lock';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
@@ -390,7 +391,20 @@ export default function App() {
       {viewerDoc && (
         <div className="modal">
           <div className="sheet viewer-sheet">
-            <div className="viewer-header"><b>{viewerDoc.name}</b><button onClick={() => setViewerDoc(null)}>Close</button></div>
+            <div className="viewer-header">
+              <b>{viewerDoc.name}</b>
+              <div className="viewer-actions">
+                <button className="viewer-icon-btn" title="Share" aria-label="Share"
+                  onClick={() => { sharePdf(viewerDoc.blob, viewerDoc.name).catch(() => {}); }}>
+                  <Share2 size={18} />
+                </button>
+                <button className="viewer-icon-btn" title="Download" aria-label="Download"
+                  onClick={async () => { try { toast(await saveFileToDevice(viewerDoc.blob, viewerDoc.name)); } catch (e: any) { toast(e?.message || 'Could not save the file', { type: 'error' }); } }}>
+                  <Download size={18} />
+                </button>
+                <button onClick={() => setViewerDoc(null)}>Close</button>
+              </div>
+            </div>
             <PdfViewer blob={viewerDoc.blob} />
           </div>
         </div>
