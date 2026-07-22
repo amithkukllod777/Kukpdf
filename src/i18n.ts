@@ -64,8 +64,12 @@ const en: Dict = {
   'profile.appLockOff': 'App lock is off.', 'profile.appLockOn': 'App lock is on.',
   'profile.setPin': 'Set app PIN', 'profile.removePin': 'Remove PIN', 'profile.unlockSecure': 'Unlock Secure Folder',
   'profile.deleteData': 'Delete my data', 'profile.deleteMyKukpdf': 'Delete my KukPDF data',
-  'profile.deleteAccount': 'Delete my entire Kuklabs account →',
+  'profile.deleteAccount': 'Request account deletion',
   'profile.deleteConfirm': 'Yes, delete everything', 'profile.deleting': 'Deleting…',
+  'profile.reqDeleteConfirm': 'Request deletion of your entire Kuklabs account? Our team will remove it from the backend and email you a confirmation. This affects every Kuklabs app, not just KukPDF.',
+  'profile.reqDeleteCta': 'Request deletion', 'profile.reqDeleteSending': 'Submitting…',
+  'profile.reqDeleteDone': 'Request received. Our team will delete your account and email you a confirmation.',
+  'profile.reqDeletePending': 'Account deletion requested — our team will email you a confirmation.',
   'profile.language': 'Language', 'profile.pro': 'KukPDF Pro', 'profile.upgrade': 'Upgrade to Pro',
 };
 
@@ -108,8 +112,12 @@ const hi: Dict = {
   'profile.appLockOff': 'ऐप लॉक बंद है।', 'profile.appLockOn': 'ऐप लॉक चालू है।',
   'profile.setPin': 'ऐप PIN सेट करें', 'profile.removePin': 'PIN हटाएँ', 'profile.unlockSecure': 'सुरक्षित फ़ोल्डर खोलें',
   'profile.deleteData': 'मेरा डेटा हटाएँ', 'profile.deleteMyKukpdf': 'मेरा KukPDF डेटा हटाएँ',
-  'profile.deleteAccount': 'मेरा पूरा Kuklabs अकाउंट हटाएँ →',
+  'profile.deleteAccount': 'अकाउंट हटाने का अनुरोध करें',
   'profile.deleteConfirm': 'हाँ, सब कुछ हटाएँ', 'profile.deleting': 'हटाया जा रहा है…',
+  'profile.reqDeleteConfirm': 'अपना पूरा Kuklabs अकाउंट हटाने का अनुरोध करें? हमारी टीम इसे बैकएंड से हटाकर आपको पुष्टि ईमेल भेजेगी। यह सिर्फ़ KukPDF नहीं, हर Kuklabs ऐप पर लागू होगा।',
+  'profile.reqDeleteCta': 'हटाने का अनुरोध करें', 'profile.reqDeleteSending': 'भेजा जा रहा है…',
+  'profile.reqDeleteDone': 'अनुरोध मिल गया। हमारी टीम आपका अकाउंट हटाकर आपको पुष्टि ईमेल भेजेगी।',
+  'profile.reqDeletePending': 'अकाउंट हटाने का अनुरोध दर्ज है — हमारी टीम आपको पुष्टि ईमेल भेजेगी।',
   'profile.language': 'भाषा', 'profile.pro': 'KukPDF प्रो', 'profile.upgrade': 'प्रो में अपग्रेड करें',
 };
 
