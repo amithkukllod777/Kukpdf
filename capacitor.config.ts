@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.kuklabs.pdf',
-  appName: 'Kuk PDF',
+  appName: 'Kuk PDF Scan',
   webDir: 'dist',
   bundledWebRuntime: false,
   plugins: {
@@ -13,6 +13,12 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     captureInput: true
+  },
+  ios: {
+    // Keep the web layout below the notch/status bar and above the home
+    // indicator; the app draws its own bottom nav so we don't want it under
+    // the safe-area inset.
+    contentInset: 'always'
   }
 };
 

@@ -1,0 +1,114 @@
+name: Build iOS App (unsigned)
+
+# Builds the KukPDF iOS app (Capacitor) on a macOS runner and produces an
+# UNSIGNED .ipa artifact. This verifies the app compiles for iOS and gives you a
+# build to inspect. An unsigned .ipa CANNOT be installed on a device or uploaded
+# to TestFlight/App Store — that needs Apple Developer signing (see the
+# "Signed build" notes at the bottom of this file).
+#
+# iOS builds require macOS + Xcode, so this runs on GitHub's macOS runners.
+# The ios/ folder is gitignored and regenerated here every run (same as android/).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Add iOS platform (scaffolds ios/ + runs pod install)
+        run: npx cap add ios
+
+      - name: Generate app icons from resources/icon.png (best-effort)
+        run: npx @capacitor/assets generate --ios --iconBackgroundColor '#FFFFFF' --iconBackgroundColorDark '#FFFFFF' || echo "icon generation skipped (default icon kept)"
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      - name: Configure Info.plist (permissions + Google sign-in deep link)
+        run: |
+          set -e
+          PLIST="ios/App/App/Info.plist"
+          setstr() {
+            /usr/libexec/PlistBuddy -c "Add :$1 string $2" "$PLIST" 2>/dev/null \
+              || /usr/libexec/PlistBuddy -c "Set :$1 $2" "$PLIST"
+          }
+          # Required usage strings — the App Store rejects (and iOS crashes) camera
+          # / photo access without these.
+          setstr NSCameraUsageDescription "Kuk PDF Scan uses the camera to scan documents into PDFs."
+          setstr NSPhotoLibraryUsageDescription "Kuk PDF Scan needs access to your photos to import images into PDFs."
+          setstr NSPhotoLibraryAddUsageDescription "Kuk PDF Scan saves exported files to your photo library."
+          # Google sign-in deep link (kukpdf://auth) — must match the backend
+          # APP_SCHEMES["kukpdf"] entry (KUKLABS_IDENTITY.md §3.1).
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string com.kuklabs.pdf" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string kukpdf" "$PLIST" 2>/dev/null || true
+          echo "----- Info.plist (relevant keys) -----"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$PLIST" || true
+          /usr/libexec/PlistBuddy -c "Print :NSCameraUsageDescription" "$PLIST" || true
+          /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PLIST" || true
+
+      - name: Build unsigned app
+        run: |
+          set -eo pipefail
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          if [ -z "$APP" ]; then echo "::error::No .app produced — build failed"; exit 1; fi
+          echo "Built app bundle: $APP"
+
+      - name: Package unsigned .ipa
+        run: |
+          set -e
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          rm -rf Payload && mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qr KukPDFScan-unsigned.ipa Payload
+          ls -la KukPDFScan-unsigned.ipa
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: KukPDFScan-ios-unsigned
+          path: KukPDFScan-unsigned.ipa
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Signed build for TestFlight / App Store (needs an Apple Developer account):
+#
+#   1. Apple Developer Program membership ($99/yr), bundle id com.kuklabs.pdf
+#      registered in App Store Connect + Certificates, Identifiers & Profiles.
+#   2. Add these GitHub Secrets:
+#        APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY  (App Store
+#        Connect API key) — or a distribution cert (.p12) + provisioning profile.
+#   3. Replace the two build/package steps above with an `xcodebuild archive`
+#      + `xcodebuild -exportArchive` using an ExportOptions.plist (method:
+#      app-store-connect), then upload with `xcrun altool`/`notarytool` or the
+#      `upload-testflight` action.
+# ─────────────────────────────────────────────────────────────────────────────
