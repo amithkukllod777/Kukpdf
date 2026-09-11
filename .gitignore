@@ -4,3 +4,6 @@ android/
 tsconfig.tsbuildinfo
 .DS_Store
 *.local
+
+# Capacitor iOS native project — regenerated in CI (like android/)
+ios/
