@@ -131,19 +131,23 @@ export async function appleSignInNative(): Promise<void> {
   const { SignInWithApple } = await import('@capacitor-community/apple-sign-in');
   const result = await SignInWithApple.authorize({
     clientId: 'com.kuklabs.pdf',
-    redirectURI: `${AUTH_BASE}/api/auth/apple/native`,
+    redirectURI: `${AUTH_BASE}/api/auth/apple/callback`,
     scopes: 'name email',
   });
   const idToken = result?.response?.identityToken;
   if (!idToken) throw new Error('Apple sign-in was cancelled — please try again.');
+  // Apple only returns name + email on the FIRST authorization; forward both.
   const name = [result?.response?.givenName, result?.response?.familyName].filter(Boolean).join(' ').trim();
+  const email = result?.response?.email || '';
 
   let res: Response;
   try {
-    res = await fetch(`${AUTH_BASE}/api/auth/apple/native`, {
+    // Shared backend's native endpoint (server/appleAuth.ts). aud is checked
+    // against APPLE_BUNDLE_ID, which must include com.kuklabs.pdf.
+    res = await fetch(`${AUTH_BASE}/api/auth/apple/native-exchange`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identityToken: idToken, name }),
+      body: JSON.stringify({ identityToken: idToken, name, email }),
     });
   } catch {
     throw new Error("Can't reach the Kuklabs account service. Check your connection and try again.");
