@@ -25,7 +25,7 @@ In Xcode: pick your team/signing, then Run (device/simulator) or
 Product → Archive → distribute to TestFlight / App Store.
 
 ## Already set for you
-- **Display name:** `Kuk PDF Scan`  ·  **Bundle id:** `com.kuklabs.pdf`
+- **Display name:** `Kuk Pdf`  ·  **Bundle id:** `com.kuklabs.pdf`
   (from `capacitor.config.ts`)
 - **Permissions + deep link:** applied by `patch-infoplist.sh` (re-run it after any
   fresh `cap add ios`)

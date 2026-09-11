@@ -23,12 +23,12 @@ setstr() {
   || /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
 
 # Display / bundle name (belt-and-braces; Capacitor also sets these from appName).
-setstr CFBundleDisplayName "Kuk PDF Scan"
-setstr CFBundleName        "Kuk PDF Scan"
+setstr CFBundleDisplayName "Kuk Pdf"
+setstr CFBundleName        "Kuk Pdf"
 
-setstr NSCameraUsageDescription      "Kuk PDF Scan uses the camera to scan documents into PDFs."
-setstr NSPhotoLibraryUsageDescription "Kuk PDF Scan needs access to your photos to import images into PDFs."
-setstr NSPhotoLibraryAddUsageDescription "Kuk PDF Scan saves exported files to your photo library."
+setstr NSCameraUsageDescription      "Kuk Pdf uses the camera to scan documents into PDFs."
+setstr NSPhotoLibraryUsageDescription "Kuk Pdf needs access to your photos to import images into PDFs."
+setstr NSPhotoLibraryAddUsageDescription "Kuk Pdf saves exported files to your photo library."
 
 if ! /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PLIST" 2>/dev/null | grep -q kukpdf; then
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$PLIST" 2>/dev/null || true
