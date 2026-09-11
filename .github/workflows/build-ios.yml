@@ -71,14 +71,14 @@ jobs:
           APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
           rm -rf Payload && mkdir -p Payload
           cp -R "$APP" Payload/
-          zip -qr KukPdf-unsigned.ipa Payload
-          ls -la KukPdf-unsigned.ipa
+          zip -qr KukPDFScan-unsigned.ipa Payload
+          ls -la KukPDFScan-unsigned.ipa
 
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: KukPdf-ios-unsigned
-          path: KukPdf-unsigned.ipa
+          name: KukPDFScan-ios-unsigned
+          path: KukPDFScan-unsigned.ipa
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Signed build for TestFlight / App Store (needs an Apple Developer account):

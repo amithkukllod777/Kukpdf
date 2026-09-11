@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.kuklabs.pdf',
-  appName: 'Kuk Pdf',
+  appName: 'Kuk PDF Scan',
   webDir: 'dist',
   bundledWebRuntime: false,
   plugins: {
