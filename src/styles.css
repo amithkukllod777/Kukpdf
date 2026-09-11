@@ -320,6 +320,8 @@ main{max-width:820px;margin:auto;padding:calc(28px + env(safe-area-inset-top)) 1
 .auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
 .auth-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:16px;height:58px;font-size:16px;font-weight:600;color:var(--ink)}
 .auth-google:disabled{opacity:.6}
+.auth-apple{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#000;border:1px solid #000;border-radius:16px;height:58px;margin-top:10px;font-size:16px;font-weight:600;color:#fff}
+.auth-apple:disabled{opacity:.6}
 .auth-notice{width:100%;background:var(--info-surface);color:var(--info);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;text-align:left}
 .auth-error{width:100%;background:var(--error-surface);color:var(--error);border-radius:12px;padding:10px 12px;font-size:13px;line-height:19px;margin-bottom:12px;text-align:left}
 .auth-legal{font-size:13px;line-height:19px;font-weight:400;color:var(--muted);margin:14px 0 6px}
