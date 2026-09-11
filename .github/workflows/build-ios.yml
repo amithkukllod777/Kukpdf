@@ -11,6 +11,15 @@ name: Build iOS App (unsigned)
 
 on:
   workflow_dispatch:
+  # macOS runners cost ~10x, so this does NOT run on every push. It fires only
+  # when the iOS build config itself changes (and only on this dev branch), plus
+  # manual runs via workflow_dispatch once the file reaches the default branch.
+  push:
+    branches:
+      - claude/dekho-pdf-android-repo-9ai9x9
+    paths:
+      - '.github/workflows/build-ios.yml'
+      - 'capacitor.config.ts'
 
 jobs:
   build-ios:
