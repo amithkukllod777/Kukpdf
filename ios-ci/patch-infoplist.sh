@@ -16,6 +16,16 @@ setstr() {
     || /usr/libexec/PlistBuddy -c "Set :$1 $2" "$PLIST"
 }
 
+# Export-compliance: KukPDF uses only standard HTTPS / system crypto (no custom
+# encryption) → declare exempt. Missing this is a common cause of Apple HOLDING a
+# build in "processing" and silently dropping it, or nagging for a compliance answer.
+/usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST" 2>/dev/null \
+  || /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
+
+# Display / bundle name (belt-and-braces; Capacitor also sets these from appName).
+setstr CFBundleDisplayName "Kuk PDF Scan"
+setstr CFBundleName        "Kuk PDF Scan"
+
 setstr NSCameraUsageDescription      "Kuk PDF Scan uses the camera to scan documents into PDFs."
 setstr NSPhotoLibraryUsageDescription "Kuk PDF Scan needs access to your photos to import images into PDFs."
 setstr NSPhotoLibraryAddUsageDescription "Kuk PDF Scan saves exported files to your photo library."
