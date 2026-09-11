@@ -38,4 +38,36 @@ if ! /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PLIST" 2>/dev/null |
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string kukpdf" "$PLIST"
 fi
 
-echo "patch-infoplist: done → $PLIST"
+# iOS minimum deployment target → 15.0. Apple warns (ITMS-90068) below 15.0 and
+# requires it from Spring 2027; Capacitor scaffolds a lower default. Bump the
+# Podfile + Xcode project, then re-run pod install so pods match. (macOS sed.)
+POD="$(dirname "$PLIST")/../Podfile"          # ios/App/Podfile
+PBX="$(dirname "$PLIST")/../App.xcodeproj/project.pbxproj"
+[ -f "$POD" ] && sed -i '' -E "s/platform :ios, '[0-9.]+'/platform :ios, '15.0'/" "$POD" || true
+[ -f "$PBX" ] && sed -i '' -E "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g" "$PBX" || true
+if [ -f "$POD" ]; then ( cd "$(dirname "$POD")" && pod install >/dev/null 2>&1 ) || echo "patch-infoplist: pod install re-run skipped (run it manually if pods changed)"; fi
+
+# Sign in with Apple entitlement (required by @capacitor-community/apple-sign-in;
+# App Store Guideline 4.8 since we offer Google sign-in). Create the entitlements
+# file and wire it into the App target if not already referenced. In Xcode this
+# is the "Sign in with Apple" capability — one click — if you prefer the GUI.
+ENT="$(dirname "$PLIST")/App.entitlements"    # ios/App/App/App.entitlements
+if [ ! -f "$ENT" ] || ! grep -q "applesignin" "$ENT"; then
+  cat > "$ENT" <<'ENT_EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>com.apple.developer.applesignin</key>
+  <array><string>Default</string></array>
+</dict>
+</plist>
+ENT_EOF
+fi
+if [ -f "$PBX" ] && ! grep -q "CODE_SIGN_ENTITLEMENTS" "$PBX"; then
+  echo "patch-infoplist: NOTE — App.entitlements created. In Xcode, App target →"
+  echo "  Signing & Capabilities → + Capability → 'Sign in with Apple' (one click)."
+  echo "  (That wires CODE_SIGN_ENTITLEMENTS to App/App.entitlements.)"
+fi
+
+echo "patch-infoplist: done → $PLIST (min iOS 15.0, Sign in with Apple entitlement)"

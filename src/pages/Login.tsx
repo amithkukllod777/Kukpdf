@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { Eye, EyeOff, Lock, Mail, Smartphone, User } from 'lucide-react';
 import { productBrand } from '../brand';
 import {
-  directLogin, directRegister, forgotPassword, googleSignInUrl,
+  appleSignInNative, directLogin, directRegister, forgotPassword, googleSignInUrl,
   resendOtp, resetPassword, verifyLoginOtp, verifyOtp,
 } from '../kuklabs/authClient';
 import { authMessages, friendlyError } from '../auth/authMessages';
@@ -104,6 +104,14 @@ export default function Login({ onDone, onClose }: { onDone: () => void; onClose
     }
     // Web (pdf.kuklabs.com): cookie-based, same-tab redirect.
     window.location.href = googleSignInUrl(window.location.pathname || '/');
+  }, authMessages.genericSignInError);
+
+  // "Sign in with Apple" — native iOS only (App Store Guideline 4.8 requires it
+  // when Google sign-in is offered). Returns a bearer token synchronously via the
+  // shared backend, so onDone() runs straight away like email login.
+  const apple = () => run(async () => {
+    await appleSignInNative();
+    onDone();
   }, authMessages.genericSignInError);
 
   return (
@@ -224,6 +232,14 @@ export default function Login({ onDone, onClose }: { onDone: () => void; onClose
               </svg>
               Continue with Google
             </button>
+            {Capacitor.getPlatform() === 'ios' && (
+              <button className="auth-apple" disabled={loading} onClick={apple}>
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor">
+                  <path d="M16.37 12.7c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.71-3.19-1.73-1.36-.14-2.65.8-3.34.8-.69 0-1.75-.78-2.88-.76-1.48.02-2.85.86-3.61 2.19-1.54 2.67-.39 6.62 1.11 8.79.73 1.06 1.6 2.25 2.74 2.21 1.1-.04 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.08 2.65-2.15.84-1.23 1.18-2.42 1.2-2.48-.03-.01-2.3-.88-2.32-3.5zM14.16 6.3c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.55 1.31-.56.64-1.05 1.68-.92 2.67.97.08 1.96-.49 2.57-1.22z"/>
+                </svg>
+                Continue with Apple
+              </button>
+            )}
           </>
         )}
 

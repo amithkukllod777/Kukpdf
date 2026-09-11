@@ -120,6 +120,40 @@ export async function exchangeGoogleCode(code: string): Promise<void> {
   await Preferences.set({ key: USER_KEY, value: JSON.stringify({ id: body.id ?? body.email, name: body.name, email: body.email }) });
 }
 
+/**
+ * "Sign in with Apple" — native iOS. App Store Guideline 4.8 requires an Apple
+ * sign-in option wherever a third-party one (Google) is offered. The native
+ * plugin returns Apple's identityToken (a JWT); the shared backend verifies it
+ * (aud = com.kuklabs.pdf) and returns a bearer token, which we store exactly like
+ * Google/email. iOS-only — the button is hidden elsewhere.
+ */
+export async function appleSignInNative(): Promise<void> {
+  const { SignInWithApple } = await import('@capacitor-community/apple-sign-in');
+  const result = await SignInWithApple.authorize({
+    clientId: 'com.kuklabs.pdf',
+    redirectURI: `${AUTH_BASE}/api/auth/apple/native`,
+    scopes: 'name email',
+  });
+  const idToken = result?.response?.identityToken;
+  if (!idToken) throw new Error('Apple sign-in was cancelled — please try again.');
+  const name = [result?.response?.givenName, result?.response?.familyName].filter(Boolean).join(' ').trim();
+
+  let res: Response;
+  try {
+    res = await fetch(`${AUTH_BASE}/api/auth/apple/native`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identityToken: idToken, name }),
+    });
+  } catch {
+    throw new Error("Can't reach the Kuklabs account service. Check your connection and try again.");
+  }
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body?.token) throw new Error(body?.error || 'Apple sign-in failed — please try again.');
+  await Preferences.set({ key: TOKEN_KEY, value: body.token });
+  await Preferences.set({ key: USER_KEY, value: JSON.stringify({ id: body.email || body.name, name: body.name, email: body.email }) });
+}
+
 export async function getToken(): Promise<string | null> {
   return (await Preferences.get({ key: TOKEN_KEY })).value;
 }
