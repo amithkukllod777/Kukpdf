@@ -10,16 +10,10 @@ name: Build iOS App (unsigned)
 # The ios/ folder is gitignored and regenerated here every run (same as android/).
 
 on:
+  # Manual only. iOS is normally built on a Mac (see ios-ci/README.md); this
+  # workflow just mirrors those steps on a GitHub-hosted macOS runner, which
+  # requires macOS runners to be enabled for the account's Actions billing.
   workflow_dispatch:
-  # macOS runners cost ~10x, so this does NOT run on every push. It fires only
-  # when the iOS build config itself changes (and only on this dev branch), plus
-  # manual runs via workflow_dispatch once the file reaches the default branch.
-  push:
-    branches:
-      - claude/dekho-pdf-android-repo-9ai9x9
-    paths:
-      - '.github/workflows/build-ios.yml'
-      - 'capacitor.config.ts'
 
 jobs:
   build-ios:
@@ -51,29 +45,7 @@ jobs:
         run: npx cap sync ios
 
       - name: Configure Info.plist (permissions + Google sign-in deep link)
-        run: |
-          set -e
-          PLIST="ios/App/App/Info.plist"
-          setstr() {
-            /usr/libexec/PlistBuddy -c "Add :$1 string $2" "$PLIST" 2>/dev/null \
-              || /usr/libexec/PlistBuddy -c "Set :$1 $2" "$PLIST"
-          }
-          # Required usage strings — the App Store rejects (and iOS crashes) camera
-          # / photo access without these.
-          setstr NSCameraUsageDescription "Kuk PDF Scan uses the camera to scan documents into PDFs."
-          setstr NSPhotoLibraryUsageDescription "Kuk PDF Scan needs access to your photos to import images into PDFs."
-          setstr NSPhotoLibraryAddUsageDescription "Kuk PDF Scan saves exported files to your photo library."
-          # Google sign-in deep link (kukpdf://auth) — must match the backend
-          # APP_SCHEMES["kukpdf"] entry (KUKLABS_IDENTITY.md §3.1).
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$PLIST" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$PLIST" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string com.kuklabs.pdf" "$PLIST" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string kukpdf" "$PLIST" 2>/dev/null || true
-          echo "----- Info.plist (relevant keys) -----"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$PLIST" || true
-          /usr/libexec/PlistBuddy -c "Print :NSCameraUsageDescription" "$PLIST" || true
-          /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PLIST" || true
+        run: bash ios-ci/patch-infoplist.sh
 
       - name: Build unsigned app
         run: |
