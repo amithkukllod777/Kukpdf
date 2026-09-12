@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { Eye, EyeOff, Lock, Mail, Smartphone, User } from 'lucide-react';
 import { productBrand } from '../brand';
 import {
-  appleSignInNative, directLogin, directRegister, forgotPassword, googleSignInUrl,
+  appleSignInNative, directLogin, directRegister, forgotPassword, googleSignInNative, googleSignInUrl,
   resendOtp, resetPassword, verifyLoginOtp, verifyOtp,
 } from '../kuklabs/authClient';
 import { authMessages, friendlyError } from '../auth/authMessages';
@@ -94,8 +94,15 @@ export default function Login({ onDone, onClose }: { onDone: () => void; onClose
   });
 
   const google = () => run(async () => {
-    // System-browser + deep-link flow (KUKLABS_IDENTITY.md §3.1). The browser
-    // completes Google auth; the backend hands a one-time code back to the app
+    // iOS: native Google sheet (Firebase Auth) → bearer token from the shared
+    // backend's native-exchange, so it completes in-app like Apple/email → onDone().
+    if (Capacitor.getPlatform() === 'ios') {
+      await googleSignInNative();
+      onDone();
+      return;
+    }
+    // Android native: system-browser + deep-link flow (KUKLABS_IDENTITY.md §3.1).
+    // The browser completes Google auth; the backend hands a one-time code back
     // via the kukpdf://auth deep link, caught by the appUrlOpen listener in App.tsx.
     if (Capacitor.isNativePlatform()) {
       await Browser.open({ url: googleSignInUrl('/') });

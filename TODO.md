@@ -104,6 +104,33 @@ end-to-end on a real device** (owner confirmed 2026-07-13). App `AUTH_BASE` is
 registered as a Google OAuth JS origin + callback). Firebase has
 `com.kuklabs.pdf` + release-keystore SHA-1/SHA-256 registered.
 
+**Firebase on iOS — native Google Sign-In + FCM push (wired, needs owner Xcode/deploy):**
+The owner added `GoogleService-Info.plist` (Firebase project `kukchat-b6402`, iOS
+app `com.kuklabs.pdf`). Two capabilities added, both **iOS-first**:
+- **Native Google Sign-In (iOS):** `@capacitor-firebase/authentication` runs the
+  native Google sheet and returns Google's `id_token`; the app posts it to the new
+  shared-backend endpoint `POST /api/auth/google/native-exchange`, which verifies
+  it against Google's JWKS (`aud` = the app's OAuth client id) and returns a bearer
+  token — same account resolution as the browser flow. iOS uses this; **Android
+  keeps the browser+deep-link Google flow** (no `google-services.json` for native
+  Firebase auth yet). `authClient.googleSignInNative()` + `Login.tsx` iOS branch.
+- **Push (FCM/APNs):** `@capacitor-firebase/messaging` requests permission, fetches
+  the FCM token and registers it via `POST /api/push/register` (Bearer-authed) into
+  the new product-agnostic `kuklabs_push_tokens` registry (`app='kukpdf'`). Token
+  registration is complete end-to-end; the first KukPDF push **sender** is not
+  wired yet (a scanner has no push trigger today) — the backend `notifyUsersApp`
+  primitive is ready for the first real event (e.g. cloud-sync / security alert).
+  `src/capacitor/push.ts`; registered on sign-in, unregistered on sign-out.
+- iOS config injected by `ios-ci/patch-infoplist.sh` (run after `npx cap add ios`):
+  copies `GoogleService-Info.plist`, adds the `REVERSED_CLIENT_ID` URL scheme,
+  `remote-notification` background mode, and the `aps-environment` entitlement.
+- Backend: kukbook-erp **PR #2290** (`server/googleAuth.ts` native-exchange +
+  `kuklabsPush.ts`/`pushRoutes.ts` + `kuklabs_push_tokens` migration).
+- **Owner actions (not code):** in Xcode add `GoogleService-Info.plist` to the App
+  target + enable "Sign in with Apple" and "Push Notifications" capabilities; upload
+  the APNs auth key in the Firebase console; ensure `FCM_SERVICE_ACCOUNT` is set on
+  AWS; merge/deploy PR #2290 and run the `kuklabs_push_tokens` migration.
+
 **Still blocked on owner infra (not code):** a `pdf.kuklabs.com` subdomain
 enables shared-cookie SSO on web. The
 `AUTH_BASE` constant points at the shared backend (`www.kuklabs.com`) and swaps

@@ -106,6 +106,38 @@ export function googleSignInUrl(returnTo = '/'): string {
   return `${AUTH_BASE}/api/auth/google/start?${p.toString()}`;
 }
 
+/**
+ * "Continue with Google" — NATIVE iOS. Instead of the system-browser + deep-link
+ * dance, iOS runs the native Google sheet via @capacitor-firebase/authentication
+ * and gets Google's id_token. The shared backend verifies it (aud = the app's
+ * OAuth client id) at /api/auth/google/native-exchange and returns a bearer token,
+ * stored exactly like Apple/email. iOS-only (Android keeps the browser flow — it
+ * has no google-services.json for native Firebase auth).
+ */
+export async function googleSignInNative(): Promise<void> {
+  const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+  const result = await FirebaseAuthentication.signInWithGoogle();
+  const idToken = result?.credential?.idToken;
+  if (!idToken) throw new Error('Google sign-in was cancelled — please try again.');
+  const name = result?.user?.displayName || '';
+  const email = result?.user?.email || '';
+
+  let res: Response;
+  try {
+    res = await fetch(`${AUTH_BASE}/api/auth/google/native-exchange`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken, name, email }),
+    });
+  } catch {
+    throw new Error("Can't reach the Kuklabs account service. Check your connection and try again.");
+  }
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body?.token) throw new Error(body?.error || 'Google sign-in failed — please try again.');
+  await Preferences.set({ key: TOKEN_KEY, value: body.token });
+  await Preferences.set({ key: USER_KEY, value: JSON.stringify({ id: body.email || body.name, name: body.name, email: body.email }) });
+}
+
 /** Trades the one-time deep-link code for a bearer session token (native step 3). */
 export async function exchangeGoogleCode(code: string): Promise<void> {
   let res: Response;

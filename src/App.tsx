@@ -26,6 +26,7 @@ import { hasPin } from './capacitor/lock';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { exchangeGoogleCode, getCurrentUser, signOut, type KuklabsUser } from './kuklabs/authClient';
+import { registerForPush, unregisterForPush } from './capacitor/push';
 import { useT } from './i18n';
 
 const pathToTab: Record<string, Tab> = { '/': 'home', '/tools': 'tools', '/scan': 'scan', '/files': 'files', '/profile': 'profile' };
@@ -114,7 +115,15 @@ export default function App() {
     return () => { sub.then((s) => s.remove()); };
   }, [user]);
 
+  // Register this device for push once signed in (native only; best-effort).
+  // Fires on every transition to a signed-in user — initial load, email/OTP,
+  // Google (native or deep-link) and Apple all flow through `user`.
+  useEffect(() => {
+    if (user) registerForPush();
+  }, [user]);
+
   async function handleSignOut() {
+    await unregisterForPush(); // drop the device token before the session goes
     await signOut();
     setUser(null);
     toast('Signed out');

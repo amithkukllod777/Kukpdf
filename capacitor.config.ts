@@ -8,6 +8,17 @@ const config: CapacitorConfig = {
   plugins: {
     Camera: {
       permissions: ['camera', 'photos']
+    },
+    // Native "Continue with Google" (iOS) via Firebase Auth — uses the app's
+    // GoogleService-Info.plist. skipNativeAuth stays false so the plugin returns
+    // Google's id_token for the shared backend's native-exchange.
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ['google.com']
+    },
+    // FCM/APNs push — foreground presentation on iOS.
+    FirebaseMessaging: {
+      presentationOptions: ['badge', 'sound', 'alert']
     }
   },
   android: {
