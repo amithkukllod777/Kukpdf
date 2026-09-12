@@ -131,6 +131,14 @@ app `com.kuklabs.pdf`). Two capabilities added, both **iOS-first**:
   the APNs auth key in the Firebase console; ensure `FCM_SERVICE_ACCOUNT` is set on
   AWS; merge/deploy PR #2290 and run the `kuklabs_push_tokens` migration.
 
+**UI polish pass (2026-09):** added a reusable `EmptyState` component (icon in a
+soft accent circle + heading + subtext) — the Files list and Home "recent files"
+empty states are now calm, centred blocks instead of a bare floating line; the
+Scan screen's empty hero is vertically centred so it no longer sits top-heavy
+with dead space below. Stayed within the Kuklabs design system (single accent,
+neutral text). The Home Quick-Tools tiles keep their per-tool colour coding (a
+deliberate product choice) — can be unified to the accent family later if wanted.
+
 **Still blocked on owner infra (not code):** a `pdf.kuklabs.com` subdomain
 enables shared-cookie SSO on web. The
 `AUTH_BASE` constant points at the shared backend (`www.kuklabs.com`) and swaps
@@ -254,6 +262,7 @@ match.
 ## Camera scanner
 
 - [x] Native document scanner — Google ML Kit Document Scanner (`@capacitor-mlkit/document-scanner`), the same scanner Google Drive uses: live camera preview, auto edge-detection, auto-crop, perspective correction and filters, all native, no custom Kotlin/CameraX module written by hand. Android only; auto-falls back to plain camera capture on web/iOS or if the on-device Google Play services module isn't installed yet (with an in-app "Enable auto-scan" one-time download prompt). **Not yet verified on a physical device** — built and wired end-to-end, CI-built, but the native scanner UI itself can only be exercised on-device, not in this dev sandbox.
+- [x] **Native document scanner on iOS — Apple VisionKit** (`VNDocumentCameraViewController`, the same scanner as the Notes/Files apps: live edge detection, auto-capture, perspective correction, multi-page). Shipped as a small **local Capacitor plugin** `local-plugins/capacitor-ios-docscan` (Swift, `CAPBridgedPlugin`, no third-party dependency) and wired into `src/capacitor/documentScanner.ts` so `scannerReady` is now true on iOS too — Android keeps ML Kit, iOS uses VisionKit, web falls back to plain camera. VisionKit is built into iOS (no module download, unlike ML Kit's), so no "Enable auto-scan" step on iOS. Auto-integrates via `npx cap sync ios` + `pod install` (the plugin has a podspec). **Verifiable only on real iOS hardware** (`VNDocumentCameraViewController.isSupported` is false on the simulator); the web build + Playwright smoke pass here.
 - [x] CameraX live camera preview (via the ML Kit scanner's built-in native UI, not a hand-built preview)
 - [x] Camera permission flow (handled natively by the scanner / Capacitor Camera plugin)
 - [x] Auto document detection

@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
-import { CheckSquare, Download, Lock, Share2, Trash2, Upload, X } from 'lucide-react';
+import { CheckSquare, Download, FolderOpen, Lock, Share2, Trash2, Upload, X } from 'lucide-react';
 import type { DocItem } from '../types';
 import Header from '../components/Header';
 import FileRow from '../components/FileRow';
+import EmptyState from '../components/EmptyState';
 import { useT } from '../i18n';
 import { sharePdf, saveFileToDevice } from '../capacitor/share';
 import { makeZip } from '../export/zip';
@@ -114,7 +115,9 @@ export default function FilesPage({ docs, onOpen, onDelete, onBulkDelete, onTogg
       </div>
       {tab === 'Secure' && !unlockedSecure && <p className="viewer-status">{t('files.secureHint')}</p>}
       <div className="list" style={selectMode && selected.size > 0 ? { paddingBottom: 76 } : undefined}>
-        {shown.length === 0 && <p className="viewer-status">{t('files.emptyHere')}</p>}
+        {shown.length === 0 && (
+          <EmptyState icon={FolderOpen} title={t('files.emptyHere')} subtitle={t('files.emptyHint')} />
+        )}
         {shown.map((d) => (
           <FileRow
             key={d.id}

@@ -203,7 +203,8 @@ main{max-width:820px;margin:auto;padding:calc(28px + env(safe-area-inset-top)) 1
 .bottom button.scan-fab span{display:none}
 
 /* Scan empty-state card — flat, one primary action §8 (no gradients/glossy shadows §7.4) */
-.scan-hero{border-radius:var(--r-lg);padding:24px 16px;background:var(--surface);border:1px solid var(--line);text-align:center;margin-top:6px}
+.scan-empty{display:flex;flex-direction:column;justify-content:center;min-height:56vh}
+.scan-hero{border-radius:var(--r-lg);padding:28px 16px;background:var(--surface);border:1px solid var(--line);text-align:center;margin-top:6px;box-shadow:0 1px 2px var(--overlay)}
 .scan-hero .scan-glyph{width:56px;height:56px;border-radius:var(--r-md);background:var(--p-surface);color:var(--p);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px}
 .scan-hero .scan-glyph svg{width:28px;height:28px}
 .scan-hero b{font-size:18px;line-height:26px;font-weight:600;display:block;color:var(--ink)}
@@ -336,6 +337,16 @@ main{max-width:820px;margin:auto;padding:calc(28px + env(safe-area-inset-top)) 1
 :root[data-theme="dark"] .auth-name span{color:#FF7A70}
 :root[data-theme="light"] .auth-card{opacity:.55}
 :root[data-theme="light"] .auth-name span{color:var(--pdf-red)}
+
+/* ===== Empty state — a calm, centred block instead of a floating line ===== */
+.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:40px 24px;margin:8px auto 0;max-width:320px}
+.empty-state .es-ico{width:64px;height:64px;border-radius:var(--pill);background:var(--p-surface);color:var(--p);display:grid;place-items:center;margin-bottom:6px}
+.empty-state .es-ico svg{width:30px;height:30px}
+.empty-state b{font-size:16px;font-weight:600;color:var(--ink)}
+.empty-state span{font-size:14px;line-height:20px;color:var(--muted)}
+.empty-state .es-action{margin-top:12px;min-height:44px;padding:0 20px;border-radius:var(--r-md);background:var(--p);color:#fff;font-weight:600;font-size:15px;display:inline-flex;align-items:center;gap:8px}
+.empty-state .es-action:active{background:var(--p-press)}
+.empty-state .es-action svg{width:18px;height:18px}
 
 /* ===== Viewer, tools, crop, page manager, signature, lock, OCR ===== */
 .viewer-status{color:var(--muted);padding:8px 0;font-size:14px}

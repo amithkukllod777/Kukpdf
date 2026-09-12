@@ -99,7 +99,7 @@ export default function ScanPage({
       </div>
 
       {pages.length === 0 ? (
-        <>
+        <div className="scan-empty">
           <div className="scan-hero">
             <span className="scan-glyph">{scannerReady ? <ScanLine /> : <Camera />}</span>
             <b>{t('scan.ready')}</b>
@@ -119,7 +119,7 @@ export default function ScanPage({
             <button onClick={onImportPhotos}><ImagePlus />{t('scan.importPhotos')}</button>
             <button onClick={() => pdfInputRef.current?.click()}><FileText />{t('scan.importPdf')}</button>
           </div>
-        </>
+        </div>
       ) : (
         <>
           <div className="scan-status-mini">

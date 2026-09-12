@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import {
-  Crown, FileText, Files, Layers, Lock, Minimize2, Pencil, RefreshCw, Scissors, Search,
+  Crown, FileText, Files, Layers, Lock, Minimize2, Pencil, RefreshCw, ScanLine, Scissors, Search,
 } from 'lucide-react';
 import type { DocItem, Tab } from '../types';
 import ToolCard from '../components/ToolCard';
 import FileRow from '../components/FileRow';
+import EmptyState from '../components/EmptyState';
 import { ALL_TOOLS } from './Tools';
 import { useT, useToolName } from '../i18n';
 
@@ -92,10 +93,22 @@ export default function HomePage({ setTab, docs, onOpenTool, onOpenDoc }: {
           </div>
 
           <h2 className="home-h2">{t('home.recentFiles')}</h2>
-          <div className="list">
-            {recent.length === 0 && <p className="viewer-status">{t('home.noRecent')}</p>}
-            {recent.map((d) => <FileRow key={d.id} d={d} onOpen={() => onOpenDoc(d)} />)}
-          </div>
+          {recent.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title={t('home.noRecent')}
+              subtitle={t('home.noRecentHint')}
+              action={(
+                <button className="es-action" onClick={() => setTab('scan')}>
+                  <ScanLine size={18} /> {t('home.startScan')}
+                </button>
+              )}
+            />
+          ) : (
+            <div className="list">
+              {recent.map((d) => <FileRow key={d.id} d={d} onOpen={() => onOpenDoc(d)} />)}
+            </div>
+          )}
         </>
       )}
     </section>
