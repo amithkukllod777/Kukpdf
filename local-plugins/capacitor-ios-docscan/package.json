@@ -9,7 +9,8 @@
   "files": [
     "index.js",
     "index.d.ts",
-    "ios/Plugin",
+    "ios/Sources",
+    "Package.swift",
     "CapacitorIosDocscan.podspec"
   ],
   "author": "Kuklabs",
