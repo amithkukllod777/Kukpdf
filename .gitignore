@@ -5,5 +5,7 @@ tsconfig.tsbuildinfo
 .DS_Store
 *.local
 
-# Capacitor iOS native project — regenerated in CI (like android/)
-ios/
+# Capacitor iOS native project — regenerated in CI (like android/). Anchored to
+# the repo root so it ONLY ignores the app's generated ./ios/, NOT the committed
+# Swift source of the local scanner plugin (local-plugins/**/ios/).
+/ios/
